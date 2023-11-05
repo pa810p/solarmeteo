@@ -9,7 +9,8 @@ used to analyze the correlation between weather conditions and power generation 
 
 SolarMeteo stores data for either meteo or solar in separate application calls.
 <p align="center">
-<img src="https://github.com/pa810p/solarmeteo/assets/46489402/02255b3a-5bfb-4e47-8041-19b9b4b41159"></p>
+  <img src="https://github.com/pa810p/solarmeteo/assets/46489402/587cd1e6-7af7-456a-ac60-c32938a5a389">
+</p>
 
 ## Installation
 
@@ -155,9 +156,10 @@ ORDER BY datetime DESC, wind_speed DESC, city LIMIT 12;
 ````
 
 ### Grafana (screenshots)
-<p aligh="center">
-<img src="https://github.com/pa810p/solarmeteo/assets/46489402/0b23ee81-c7a4-4dc0-81b0-f1126febb1cf" width="902">
-<img src="https://github.com/pa810p/solarmeteo/assets/46489402/716d015d-0f81-4a56-b2e6-41a73630d28b" width="902">
+
+<p align="center">
+  <img src="https://github.com/pa810p/solarmeteo/assets/46489402/c28b2d16-f6e6-471c-8632-d4f4a07cb636">
+  <img src="https://github.com/pa810p/solarmeteo/assets/46489402/c1b84db9-15b3-42b8-82d2-43dd9031652e">
 </p>
 
 ## TODO
