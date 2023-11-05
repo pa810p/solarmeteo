@@ -1,0 +1,12 @@
+{
+  "id_stacji":"12566",
+  "stacja":"Krak\u00f3w",
+  "data_pomiaru":"2019-07-28",
+  "godzina_pomiaru":"7",
+  "temperatura":"19.4",
+  "predkosc_wiatru":"2",
+  "kierunek_wiatru":"10",
+  "wilgotnosc_wzgledna":"85.7",
+  "suma_opadu":"0000000000.2",
+  "cisnienie":"1004.2"
+}

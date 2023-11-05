@@ -1,0 +1,38 @@
+[meteo]
+# meteo_environment:
+# empty for product database,
+# _test for unittest environment,
+# _dev for development
+environment = _dev
+loglevel = DEBUG
+
+[meteo.database]
+username = meteo
+password =
+host =
+port =
+url = postgresql://${username}:${password}@${host}:${port}/meteo${meteo:environment}
+
+[meteo.updater]
+#daemonize option is removed for further investigation
+#daemoinize = False
+solar_update_interval = 900
+imgw_update_interval = 3600
+
+# imgw or solar or both
+modules = solar
+
+[imgw]
+url = https://danepubliczne.imgw.pl/api/data/synop
+
+# this should be set yes rarely as station coords do not change
+# or when a new station has been enveloped
+update_station_coordinates = no
+update_station_coordinates_file = data/station_list.txt
+
+[solar]
+key =
+site_id =
+url = https://monitoringapi.solaredge.com
+
+# bash-4.3$ curl "https://monitoringapi.solaredge.com/site/1088426/energy?timeUnit=QUARTER_OF_AN_HOUR&startDate=2019-08-01&endDate=2019-08-28&api_key=475NLAMYDYAOM6H7ZQAB16HDJHXLO8ZP" | jq .~

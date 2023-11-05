@@ -1,3 +1,10 @@
+# solarmeteo configuration files
+alembic.ini
+alembic_test.ini
+meteo.properties
+meteo_test.properties
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

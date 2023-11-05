@@ -1,0 +1,12 @@
+{
+  "id_stacji":"12295",
+  "stacja":"Bia\u0142ystok",
+  "data_pomiaru":"2019-07-28",
+  "godzina_pomiaru":"7",
+  "temperatura":"23.9",
+  "predkosc_wiatru":"4",
+  "kierunek_wiatru":"80",
+  "wilgotnosc_wzgledna":"67.2",
+  "suma_opadu":"0000000000.6",
+  "cisnienie":"1009"
+}
