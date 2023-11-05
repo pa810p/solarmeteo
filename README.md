@@ -8,6 +8,8 @@ used to analyze the correlation between weather conditions and power generation 
   photovoltaic installation with site_id and generated key_id on https://monitoring.solaredge.com
 
 SolarMeteo stores data for either meteo or solar in separate application calls.
+<p align="center">
+<img src="https://github.com/pa810p/solarmeteo/assets/46489402/02255b3a-5bfb-4e47-8041-19b9b4b41159"></p>
 
 ## Installation
 
@@ -153,6 +155,10 @@ ORDER BY datetime DESC, wind_speed DESC, city LIMIT 12;
 ````
 
 ### Grafana (screenshots)
+<p aligh="center">
+<img src="https://github.com/pa810p/solarmeteo/assets/46489402/0b23ee81-c7a4-4dc0-81b0-f1126febb1cf" width="902">
+<img src="https://github.com/pa810p/solarmeteo/assets/46489402/716d015d-0f81-4a56-b2e6-41a73630d28b" width="902">
+</p>
 
 ## TODO
 
