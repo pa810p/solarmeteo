@@ -9,8 +9,8 @@ import time
 from datetime import datetime
 from datetime import timedelta
 from meteo_updater import StationData
-from Updater import Updater
-import Station
+from meteo_updater.Updater import Updater
+from meteo_updater import Station
 
 import sqlalchemy.exc
 
