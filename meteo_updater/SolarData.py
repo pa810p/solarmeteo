@@ -31,4 +31,4 @@ class SolarData(Base):
 
     def __repr__(self):
         return "<SolarData(id=%s, datetime=%s, power=%s)>" % (
-            str(self.id) if not None else 'None', self.datetime, self.power)
+            str(self.id) if not None else 'None', str(self.datetime), self.power)

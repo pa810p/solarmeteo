@@ -8,10 +8,10 @@ from datetime import time, datetime
 
 from sqlalchemy.orm import Session
 
-#from meteo_updater import sun
+from meteo_updater import sun
 from meteo_updater.SolarData import SolarData
 from meteo_updater.Updater import Updater
-# from meteo_updater.SunData import SunData
+from meteo_updater.SunData import SunData
 
 
 class SolarUpdater(Updater):
@@ -50,16 +50,16 @@ class SolarUpdater(Updater):
         solar_data_db = SolarData(solar_datetime, power)
 
         # calculate solar position on this datetime
-#        (azimuth, height) = sun.calculate_sun(solar_datetime, self.lon, self.lat, self.height)
-#        sun_data_db = SunData(solar_datetime, azimuth, height)
+        (azimuth, height) = sun.calculate_sun(solar_datetime, self.lon, self.lat, self.height)
+        sun_data_db = SunData(solar_datetime, azimuth, height)
 
         session.add(solar_data_db)
-        # session.add(sun_data_db)
+        session.add(sun_data_db)
 
         session.commit()
         session.close_all_sessions()
 
-        # self.logger.debug('Updated: %r' % solar_data)
+        self.logger.debug('Updated: %r' % solar_data)
 
     def update_from_file(self, file_name):
         """
@@ -88,7 +88,7 @@ class SolarUpdater(Updater):
             entity = session.query(SolarData).filter_by(datetime=measure['date'])
             if entity is None:
                 # create new object
-                self.logger.debug('creatling new solar_data entry')
+                self.logger.debug('creating new solar_data entry')
                 solar_data = SolarData(datetime=measure['date'], power=measure['value'])
                 session.add(solar_data)
                 session.commit()
