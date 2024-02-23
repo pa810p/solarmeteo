@@ -77,7 +77,7 @@ $ cp meteo.properties.template meteo_test.properties
 - port
 - user
 - password
-- environment = _test (:bulb: for testing use **_test**)
+- environment = _test ( :bulb: for testing use **_test**)
 ````shell
 $ vim meteo.properties
 ````
@@ -173,7 +173,7 @@ ORDER BY datetime DESC, wind_speed DESC, city LIMIT 12;
     - test
     - production
     - run tests in crontab and report tests results
-- add azimuth and height of a sun to database (:bulb: as separate method in relations to meteo and solar tables)
+- add azimuth and height of a sun to database ( :bulb: as separate method in relations to meteo and solar tables)
 - add more documentation and examples of use solarmeteo
 - fix daemonize mode
 - long term feature:
