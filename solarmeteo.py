@@ -32,6 +32,9 @@ def main():
     updater_update_station_coordinates_file = config['imgw']['update_station_coordinates_file']
     solar_key = config['solar']['key']
     site_id = config['solar']['site_id']
+    lon = config['solar']['longitude']
+    lat = config['solar']['latitude']
+    height = config['solar']['height']
     solar_url = config['solar']['url']
     solar_update_interval = config['meteo.updater']['solar_update_interval']
     # TODO: this will be a coma separated list
@@ -55,6 +58,9 @@ def main():
     parser.add_option('-l', '--log-level', dest='log_level', help='logging level')
     parser.add_option('-k', '--solar_key', dest='solar_key', help='solar key')
     parser.add_option('--site_id', dest='site_id', help='solar site id')
+    parser.add_option('--longitude', dest='lon')
+    parser.add_option('--latitude', dest='lat')
+    parser.add_option('--height', dest='height')
     parser.add_option('--solar_url', dest='solar_url', help='solar base url')
     parser.add_option('--solar_update_interval', dest='solar_update_interval', help='solar update interval')
     parser.add_option('--solar-period', dest='solar_update_period', help='solar update from_date:to_date')
@@ -96,6 +102,15 @@ def main():
     if options.site_id is not None and not '' and len(options.site_id) != 0:
         site_id = options.site_id
 
+    if options.lon is not None and not '' and len(options.lon) != 0:
+        lon = options.lon
+
+    if options.lat is not None and not '' and len(options.lat) != 0:
+        lat = options.lat
+
+    if options.height is not None and not '' and len(options.height) != 0:
+        height = options.height
+
     if options.solar_url is not None and not '' and len(options.solar_url) != 0:
         solar_url = options.solar_url
 
@@ -118,6 +133,9 @@ def main():
         updater_interval=solar_update_interval,
         site_id=site_id,
         solar_key=solar_key,
+        lon=lon,
+        lat=lat,
+        height=height,
         logger=logger)
 
     # if meteo_daemonize:
@@ -148,6 +166,6 @@ def main():
 
 if __name__ == '__main__':
     desc = """This is a meteo analyzer"""
-    ver = "%prog 0.1 (c) 2019 Pawel Prokop"
+    ver = "%prog 2.0 (c) 2019-2024 Pawel Prokop"
 
     main()

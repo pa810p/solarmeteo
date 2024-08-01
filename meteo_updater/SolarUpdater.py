@@ -42,22 +42,23 @@ class SolarUpdater(Updater):
 
         solar_data = self.download_current_solar_data()
 
-        solar_datetime = solar_data['overview']['lastUpdateTime']
         power = solar_data['overview']['currentPower']['power']
+        solar_datetime_str = solar_data['overview']['lastUpdateTime']
 
         session = self.create_session()
 
-        solar_data_db = SolarData(solar_datetime, power)
+        solar_data_db = SolarData(solar_datetime_str, power)
 
         # calculate solar position on this datetime
-        (azimuth, height) = sun.calculate_sun(solar_datetime, self.lon, self.lat, self.height)
-        sun_data_db = SunData(solar_datetime, azimuth, height)
+        (azimuth, height) = sun.calculate_sun(
+            datetime.strptime(solar_datetime_str, '%Y-%m-%d %H:%M:%S'), self.lon, self.lat, self.height)
+        sun_data_db = SunData(solar_datetime_str, azimuth, height)
 
         session.add(solar_data_db)
         session.add(sun_data_db)
 
         session.commit()
-        session.close_all_sessions()
+        session.close_all()
 
         self.logger.debug('Updated: %r' % solar_data)
 

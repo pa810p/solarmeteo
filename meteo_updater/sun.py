@@ -3,18 +3,24 @@
 # Author        : Pawel Prokop
 # License       : GNU GENERAL PUBLIC LICENSE v3
 ###
-
-
+import pytz
+import astropy
 from astropy.coordinates import EarthLocation, AltAz, get_sun
 
 
-def calculate_sun(datetime, lon, lat, masl):
-    loc = EarthLocation.from_geodetic(lon, lat, masl)
-    altaz = AltAz(obstime=datetime, location=loc)
-    angle = get_sun(datetime).transform_to(altaz)
+def calculate_sun(solar_datetime, lon, lat, height):
+    loc = EarthLocation.from_geodetic(lon, lat, height)
+    altaz = AltAz(location=loc)
 
-    print(angle.az.degree)
-    print(angle.alt.degree)
+    sunpos = get_sun(
+        astropy.time.Time(
+            solar_datetime
+            .astimezone(pytz.utc)
+            .strftime("%Y-%m-%dT%H:%M:%S")
+                )).transform_to(altaz)
 
-    return angle.az.degree, angle.alt.degree
+    sun_azimuth = float(sunpos.az.degree)
+    sun_altitude = float(sunpos.alt.degree)
+
+    return sun_azimuth, sun_altitude
 

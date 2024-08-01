@@ -4,6 +4,11 @@ alembic_test.ini
 meteo.properties
 meteo_test.properties
 
+# for local tests
+testing.py
+
+# whole database dumps starting from 2019
+data/meteo_2024*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
