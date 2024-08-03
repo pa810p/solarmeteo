@@ -58,7 +58,7 @@ class SolarUpdater(Updater):
         session.add(sun_data_db)
 
         session.commit()
-        session.close_all()
+        session.close()
 
         self.logger.debug('Updated: %r' % solar_data)
 

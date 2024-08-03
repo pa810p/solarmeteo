@@ -34,5 +34,6 @@ update_station_coordinates_file = data/station_list.txt
 key =
 site_id =
 url = https://monitoringapi.solaredge.com
-
-# bash-4.3$ curl "https://monitoringapi.solaredge.com/site/1088426/energy?timeUnit=QUARTER_OF_AN_HOUR&startDate=2019-08-01&endDate=2019-08-28&api_key=475NLAMYDYAOM6H7ZQAB16HDJHXLO8ZP" | jq .~
+longitude = 21.0276
+latitude = 52.2131
+height = 106
