@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  meteo-db:
+    image: meteo-db:latest
+    container_name: meteo-db
+    restart: "no"
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=xxxxxxxx
+    volumes:
+      - merrynos:/var/lib/postgresql/data
+    ports:
+      - "2346:5432"
+    networks:
+      - meteo
+
+volumes:
+  meteo:
+    driver: local
+
+networks:
+  meteo:
+    driver: bridge
+

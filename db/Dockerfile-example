@@ -1,0 +1,16 @@
+# Use the official PostgreSQL image as the base
+FROM postgres:16.1-alpine
+
+# Set environment variables (optional)
+ENV POSTGRES_USER xxxxxxxx
+ENV POSTGRES_PASSWORD xxxxxxxx
+ENV POSTGRES_DB xxxxxxxx
+
+# Expose the PostgreSQL port
+EXPOSE 5432
+
+# Copy initialization script into the container
+COPY init.sql /docker-entrypoint-initdb.d/
+
+# CMD is provided by the official PostgreSQL image to start the PostgreSQL server
+CMD ["postgres"]
