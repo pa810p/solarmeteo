@@ -28,6 +28,30 @@ SolarMeteo stores data for either meteo or solar in separate application calls.
 - sqlalchemy2
 - mockito
 
+### Database server in docker (optional)
+SolarMeteo requires postgresql server that can be set-up optional in docker:
+
+````shell
+cd db
+docker build . -t meteo-db
+docker-container -f docker-container.yml up -d
+docker ps
+````
+
+:bulb: Some additional server configuration may be needed (it depends)
+````shell
+cat /etc/docker/daemon.json:
+{
+  "userland-proxy": false
+}
+````
+
+and for loopback forwarding:
+
+````shell
+sudo sysctl -w net.ipv4.conf.all.route_localnet=1
+````
+
 ### Create database schema using alembic
 
 1. Copy alembic.ini.template to alembic.ini
