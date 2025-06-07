@@ -10,7 +10,7 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=xxxxxxxx
     volumes:
-      - merrynos:/var/lib/postgresql/data
+      - meteo:/var/lib/postgresql/data
     ports:
       - "2346:5432"
     networks:
