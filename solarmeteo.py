@@ -7,10 +7,19 @@
 
 import configparser
 import optparse
+from datetime import datetime
+from io import BytesIO
 
+from heatmap.data_provider import DataProvider, TemperatureProvider
+from heatmap.heatmap_creator import HeatmapCreator
 from logs import logs
 from meteo_updater import MeteoUpdater, SolarUpdater
+
+from heatmap.heatmap import Heatmap
 import threading
+
+from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor, as_completed
+import imageio.v2 as imageio
 
 # logger = logs.setup_custom_logger('main', 'DEBUG')
 
@@ -39,6 +48,7 @@ def main():
     solar_update_interval = config['meteo.updater']['solar_update_interval']
     # TODO: this will be a coma separated list
     update = config['meteo.updater']['modules']
+    heatmap = None
 
     # and now overwrite them with command line if exists
     parser = optparse.OptionParser(usage="%prog [-b] [-m] [-i] [-f] [-l]", version=ver, description=desc)
@@ -64,6 +74,7 @@ def main():
     parser.add_option('--solar_url', dest='solar_url', help='solar base url')
     parser.add_option('--solar_update_interval', dest='solar_update_interval', help='solar update interval')
     parser.add_option('--solar-period', dest='solar_update_period', help='solar update from_date:to_date')
+    parser.add_option('--heatmap', dest='heatmap', help='generate map of: temperature, precipitation')
 
     # option not in properties
     # TODO: check if default can be set if empty in here
@@ -117,26 +128,10 @@ def main():
     if options.solar_update_interval is not None and not '' and len(options.solar_update_interval) != 0:
         solar_update_interval = options.solar_update_interval
 
+    if options.heatmap is not None and not '' and len(options.heatmap) != 0:
+        heatmap = options.heatmap
+
     logger = logs.setup_custom_logger('updater', log_level)
-
-    imgw_updater = MeteoUpdater.MeteoUpdater(
-        meteo_db_url=meteo_db_url,
-        meteo_data_url=imgw_data_url,
-        updater_interval=imgw_update_interval,
-        updater_update_station_coordinates=updater_update_station_coordinates,
-        updater_update_station_coordinates_file=updater_update_station_coordinates_file,
-        logger=logger)
-
-    solar_updater = SolarUpdater.SolarUpdater(
-        meteo_db_url=meteo_db_url,
-        data_url=solar_url,
-        updater_interval=solar_update_interval,
-        site_id=site_id,
-        solar_key=solar_key,
-        lon=lon,
-        lat=lat,
-        height=height,
-        logger=logger)
 
     # if meteo_daemonize:
     #     try:
@@ -157,11 +152,56 @@ def main():
 
     # TODO: should be a list imgw, solar, something, all
     if update == 'both' or update == 'imgw':
+        imgw_updater = MeteoUpdater.MeteoUpdater(
+            meteo_db_url=meteo_db_url,
+            meteo_data_url=imgw_data_url,
+            updater_interval=imgw_update_interval,
+            updater_update_station_coordinates=updater_update_station_coordinates,
+            updater_update_station_coordinates_file=updater_update_station_coordinates_file,
+            logger=logger)
         imgw_updater.update()
+
     if update == 'both' or update == 'solar':
-        solar_updater.update()
-    if solar_update_period is not None:
-        solar_updater.update_datetime_period(solar_update_period)
+        solar_updater = SolarUpdater.SolarUpdater(
+            meteo_db_url=meteo_db_url,
+            data_url=solar_url,
+            updater_interval=solar_update_interval,
+            site_id=site_id,
+            solar_key=solar_key,
+            lon=lon,
+            lat=lat,
+            height=height,
+            logger=logger)
+
+        if solar_update_period is not None:
+            solar_updater.update_datetime_period(solar_update_period)
+        else:
+            solar_updater.update()
+
+    if heatmap is not None:
+
+        match heatmap:
+            case 'temperature':
+                logger.debug(f"Starting temperature heatmap generation at {datetime.now()}")
+                dataprovider = TemperatureProvider(meteo_db_url=meteo_db_url, last=48)
+                stations = dataprovider.provide()
+                heatmap = HeatmapCreator()
+                frames = []
+                with ProcessPoolExecutor(max_workers=16) as executor:
+                    futures = [
+                        executor.submit(heatmap.generate_image, stations=stations, displaydate=displaydate)
+                        for idx, (displaydate, stations) in enumerate(stations)
+                    ]
+                    for future in as_completed(futures):
+                        frames.append(future.result())
+
+                sorted_frames = [image for datetime, image in sorted(frames, key=lambda x: x[0])]
+                imageio.mimsave("animation.gif", sorted_frames, duration=0.2, palettesize=256, subrectangles=True)
+                # imageio.mimsave("animation.mp4", sorted_frames, format="mp4", duration=0.2)  # Save as MP4# Duration per frame (sec)
+                logger.debug(f"Temperature heatmap generation completed at {datetime.now()}")
+
+
+
 
 
 if __name__ == '__main__':
