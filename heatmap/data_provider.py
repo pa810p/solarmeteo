@@ -43,6 +43,53 @@ class DataProvider:
         session = sessionmaker(bind=self.create_connection())
         return session()
 
+    def provide(self, column):
+        session = self.create_session()
+
+        latest_datetimes = session.execute(
+            select(StationData.datetime)
+            .distinct()
+            .order_by(StationData.datetime.desc())
+            .limit(self.last)
+        ).scalars().all()
+
+        # Dynamically get the column from StationData
+        data_column = getattr(StationData, column)
+
+        results = session.execute(
+            select(
+                StationData.datetime,
+                Station.longitude,
+                Station.latitude,
+                data_column,
+                Station.name
+            )
+            .join(Station, Station.id == StationData.station_id)
+            .where(
+                and_(
+                    StationData.datetime.in_(latest_datetimes),
+                    data_column.isnot(None)
+                )
+            )
+            .order_by(StationData.datetime.desc())
+        ).all()
+
+        session.close()
+
+        datetime_to_stations = defaultdict(list)
+        for datetime, lon, lat, value, name in results:
+            datetime_to_stations[datetime].append(
+                StationValue(np.float64(lon), np.float64(lat), np.float64(value), name)
+            )
+
+        sorted_map = sorted(
+            datetime_to_stations.items(),
+            key=lambda x: x[0],
+            reverse=True
+        )
+
+        return sorted_map
+
 
 
 class TemperatureProvider(DataProvider):
@@ -52,49 +99,44 @@ class TemperatureProvider(DataProvider):
         super().__init__(meteo_db_url, last, from_time, until_time)
 
 
-    def provide(self):
-        session = self.create_session()
+    def provide(self, column="temperature"):
+        return super().provide(column)
 
-        latest_datetimes = session.execute(
-            select(StationData.datetime)
-            .distinct()  # Ensure uniqueness
-            .order_by(StationData.datetime.desc())  # Newest first
-            .limit(self.last)
-        ).scalars().all()
 
-        # Fetch all stations for these datetimes
-        results = session.execute(
-            select(
-                StationData.datetime,
-                Station.longitude,
-                Station.latitude,
-                StationData.temperature,
-                Station.name
-            )
-            .join(Station, Station.id == StationData.station_id)
-            .where(
-                and_(
-                    StationData.datetime.in_(latest_datetimes),  # Filter by top N datetimes
-                    StationData.temperature.isnot(None)
-                )
-            )
-            .order_by(StationData.datetime.desc())  # Sort by datetime (newest first)
-        ).all()
+class PressureProvider(DataProvider):
 
-        session.close()
+    def __init__(self, meteo_db_url, last=1, from_time=None, until_time=None):
+        super().__init__(meteo_db_url, last, from_time, until_time)
 
-        # Group stations by datetime (using defaultdict)
-        datetime_to_stations = defaultdict(list)
-        for datetime, lon, lat, temp, name in results:
-            datetime_to_stations[datetime].append(
-                StationValue(np.float64(lon), np.float64(lat), np.float64(temp), name)
-            )
 
-        # Convert to a sorted list of tuples [(datetime, stations), ...]
-        sorted_map = sorted(
-            datetime_to_stations.items(),
-            key=lambda x: x[0],  # Sort by datetime
-            reverse=True         # Newest first
-        )
+    def provide(self, column="pressure"):
+        return super().provide(column)
 
-        return sorted_map
+
+class HumidityProvider(DataProvider):
+
+    def __init__(self, meteo_db_url, last=1, from_time=None, until_time=None):
+        super().__init__(meteo_db_url, last, from_time, until_time)
+
+
+    def provide(self, column="humidity"):
+        return super().provide(column)
+
+
+class  PrecipitationProvider(DataProvider):
+
+    def __init__(self, meteo_db_url, last=1, from_time=None, until_time=None):
+        super().__init__(meteo_db_url, last, from_time, until_time)
+
+
+    def provide(self, column="precipitation"):
+        return super().provide(column)
+
+
+class WindProvider(DataProvider):
+
+    def __init__(self, meteo_db_url, last=1, from_time=None, until_time=None):
+        super().__init__(meteo_db_url, last, from_time, until_time)
+
+    def provide(self, column="wind_speed"):
+        return super().provide(column)

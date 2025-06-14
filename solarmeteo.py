@@ -9,9 +9,12 @@ import configparser
 import optparse
 from datetime import datetime
 from io import BytesIO
+from urllib.parse import ParseResult
 
-from heatmap.data_provider import DataProvider, TemperatureProvider
-from heatmap.heatmap_creator import HeatmapCreator
+from heatmap.data_provider import (TemperatureProvider, PressureProvider, PrecipitationProvider,
+                                   HumidityProvider, WindProvider)
+from heatmap.heatmap_creator import (TemperatureCreator, PressureCreator, PrecipitationCreator,
+                                     HumidityCreator, WindCreator)
 from logs import logs
 from meteo_updater import MeteoUpdater, SolarUpdater
 
@@ -179,28 +182,35 @@ def main():
             solar_updater.update()
 
     if heatmap is not None:
+        logger.debug(f"Starting {heatmap} heatmap generation at {datetime.now()}")
+        provider_class = {
+            "temperature": (TemperatureProvider, TemperatureCreator),
+            "pressure": (PressureProvider, PressureCreator),
+            "precipitation": (PrecipitationProvider, PrecipitationCreator),
+            "humidity": (HumidityProvider, HumidityCreator),
+            "wind": (WindProvider, WindCreator)
+        }.get(heatmap)
 
-        match heatmap:
-            case 'temperature':
-                logger.debug(f"Starting temperature heatmap generation at {datetime.now()}")
-                dataprovider = TemperatureProvider(meteo_db_url=meteo_db_url, last=48)
-                stations = dataprovider.provide()
-                heatmap = HeatmapCreator()
-                frames = []
-                with ProcessPoolExecutor(max_workers=16) as executor:
-                    futures = [
-                        executor.submit(heatmap.generate_image, stations=stations, displaydate=displaydate)
+        if provider_class is not None:
+            dataprovider = provider_class[0](meteo_db_url=meteo_db_url, last=24)
+            stations = dataprovider.provide()
+            heatmap_creator = provider_class[1]()
+            frames = []
+            with ProcessPoolExecutor(max_workers=16) as executor:
+                futures = [
+                    executor.submit(heatmap_creator.generate_image, stations=stations, displaydate=displaydate)
                         for idx, (displaydate, stations) in enumerate(stations)
                     ]
-                    for future in as_completed(futures):
+
+                for future in as_completed(futures):
                         frames.append(future.result())
 
                 sorted_frames = [image for datetime, image in sorted(frames, key=lambda x: x[0])]
-                imageio.mimsave("animation.gif", sorted_frames, duration=0.2, palettesize=256, subrectangles=True)
+                imageio.mimsave(f"{heatmap}.gif", sorted_frames, duration=0.9, palettesize=256, subrectangles=True)
                 # imageio.mimsave("animation.mp4", sorted_frames, format="mp4", duration=0.2)  # Save as MP4# Duration per frame (sec)
-                logger.debug(f"Temperature heatmap generation completed at {datetime.now()}")
-
-
+            logger.debug(f"{heatmap.capitalize()} heatmap generation completed at {datetime.now()}")
+        else:
+            logger.error(f"Unknown heatmap type: {heatmap}")
 
 
 

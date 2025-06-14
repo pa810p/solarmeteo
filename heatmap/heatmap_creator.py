@@ -22,9 +22,16 @@ class HeatmapCreator:
     _CRS_LATLON = "EPSG:4326"
     _CRS_PROJECTED = "EPSG:2180"  # Poland CS92
     _COLORMAP = LinearSegmentedColormap.from_list(
-    'temp_cmap',
-    [('#8e44ad'), ('#3498db'), ('#2ecc71'), ('#f1c40f'), ('#e74c3c')]
+        'temp_cmap',
+        [
+            (0.0, '#8e44ad'),   # Violet (fixed)
+            (0.15, '#3498db'),  # Blue (denser)
+            (0.35, '#2ecc71'),  # Green (denser)
+            (0.6, '#f1c40f'),   # Yellow (denser)
+            (1.0, '#ff0000')    # Red (fixed)
+        ]
     )
+
 
     _geometry = None
 
@@ -49,7 +56,10 @@ class HeatmapCreator:
 
         return _geometry
 
-    def generate_heatmap(self, stations: list[StationValue], colormap=_COLORMAP, displaydate=''):
+
+    def generate_heatmap(self, stations: list[StationValue], colormap=_COLORMAP, displaydate='', vmin=None, vmax=None,
+                         label='Temperature (°C)',
+                         scale_min=None, scale_max=None):
 
         voivodeships_ll, poland_shape_projected = self._geometry
 
@@ -60,6 +70,11 @@ class HeatmapCreator:
         lats = np.array([s.lat for s in stations])
         temps = np.array([s.value for s in stations])
         names = np.array([s.name for s in stations])
+
+        if scale_min is not None and scale_max is not None:
+            temps_scaled = (temps - scale_min) / (scale_max - scale_min)
+        else:
+            temps_scaled = temps
 
         # Convert to projected CRS
         gdf = gpd.GeoDataFrame(
@@ -78,13 +93,20 @@ class HeatmapCreator:
         xx, yy = np.meshgrid(x_grid, y_grid)
 
         # Interpolate using RBF
-        rbf = Rbf(x, y, t, function='linear', smooth=5)
-        grid_temp = rbf(xx, yy)
+        # rbf = Rbf(x, y, t, function='linear', smooth=5)
+        # grid_temp = rbf(xx, yy)
+        rbf = Rbf(x, y, temps_scaled, function='linear', smooth=5)
+        grid_temp_scaled = rbf(xx, yy)
+        if scale_min is not None and scale_max is not None:
+            grid_temp = grid_temp_scaled * (scale_max - scale_min) + scale_min
+        else:
+            grid_temp = grid_temp_scaled
 
         # Mask areas outside Poland
         points = np.column_stack([xx.ravel(), yy.ravel()])
         mask = np.array([prepared_poland.contains(Point(p)) for p in points]).reshape(xx.shape)
         grid_temp[~mask] = np.nan
+        grid_temp = np.clip(grid_temp, vmin, vmax)
 
         # Reproject grid to geographic coordinates
         grid_points = gpd.GeoDataFrame(
@@ -98,25 +120,11 @@ class HeatmapCreator:
         # Create plot
         fig, ax = plt.subplots(figsize=(12, 10))
 
-        norm = Normalize(vmin=-5, vmax=30)
-        # norm = PowerNorm(gamma=0.7, vmin=-5, vmax=30)
-        levels = np.linspace(-5, 30, 200)
-        # levels = np.arange(-5, 30.01, 0.2)
+        norm = Normalize(vmin=vmin, vmax=vmax)
+        levels = np.linspace(vmin, vmax, 200)
 
-        # if colormap is None:
-        #     colormap = self._COLORMAP
-        colormap = LinearSegmentedColormap.from_list(
-        'piecewise_temp',
-        [
-                (0.0, '#8e44ad'),   # Violet (fixed)
-                (0.15, '#3498db'),  # Blue (denser)
-                (0.35, '#2ecc71'),  # Green (denser)
-                (0.6, '#f1c40f'),   # Yellow (denser)
-                (1.0, '#ff0000')    # Red (fixed)
-            ]
-        )
-
-        # colormap = self.cmap
+        if colormap is None:
+            colormap = self._COLORMAP
 
         # Heatmap
         contour = ax.contourf(
@@ -124,7 +132,7 @@ class HeatmapCreator:
             levels=levels,
             cmap=colormap,
             norm=norm,
-            extend='both'
+            extend='neither'
         )
 
         # Station points with names
@@ -141,7 +149,7 @@ class HeatmapCreator:
             )
             ax.text(
                 lon + 0.05, lat + 0.03,
-                f"{name} ({temp:.1f}°C)",
+                f"{name} ({temp:.1f})",
                 fontsize=8,
                 ha='left',
                 va='bottom',
@@ -157,8 +165,8 @@ class HeatmapCreator:
 
         # Colorbar
         cbar = fig.colorbar(contour, ax=ax, shrink=0.7)
-        cbar.set_label('Temperature (°C)')
-        cbar.set_ticks(np.arange(-5, 31, 5))
+        cbar.set_label(label)
+        cbar.set_ticks(np.arange(vmin, vmax + 1, 5))
 
         # Add padding around plot
         xlim = ax.get_xlim()
@@ -178,7 +186,7 @@ class HeatmapCreator:
 
 
     def generate_image(self, stations, displaydate):
-        fig = self.generate_heatmap(stations=stations, displaydate=displaydate)
+        fig = self.generate(stations=stations, displaydate=displaydate)
         try:
             canvas = FigureCanvasAgg(fig)
             canvas.draw()
@@ -191,4 +199,125 @@ class HeatmapCreator:
 
         return displaydate, img
 
+
+
+class TemperatureCreator(HeatmapCreator):
+
+    _COLORMAP = LinearSegmentedColormap.from_list(
+        'temp_cmap',
+        [
+            (0.0, '#8e44ad'),   # Violet (fixed)
+            (0.15, '#3498db'),  # Blue (denser)
+            (0.35, '#2ecc71'),  # Green (denser)
+            (0.6, '#f1c40f'),   # Yellow (denser)
+            (1.0, '#ff0000')    # Red (fixed)
+        ]
+    )
+
+    def __init__(self):
+        super().__init__()
+
+    def generate(self, stations, displaydate):
+        return self.generate_heatmap(stations=stations, colormap=self._COLORMAP, displaydate=displaydate,
+                                     vmin=-5, vmax=30, label="Temperature (°C)")
+
+
+class PressureCreator(HeatmapCreator):
+
+    _COLORMAP = LinearSegmentedColormap.from_list(
+        'temp_cmap',
+        [
+            (0.0, '#e0f8e0'),  # Very light green
+            (0.25, '#a8e6a3'), # Light green
+            (0.5, '#5fd68b'),  # Medium green
+            (0.75, '#2ecc71'), # Standard green
+            (1.0, '#145a32')   # Dark green
+        ]
+    )
+
+    def __init__(self):
+        super().__init__()
+
+    def generate(self, stations, displaydate):
+        return self.generate_heatmap(stations=stations, colormap=self._COLORMAP, displaydate=displaydate,
+                                     vmin=1000, vmax=1030, label="Pressure (hPa)",
+                                     scale_min=960, scale_max=1040)
+
+
+class HumidityCreator(HeatmapCreator):
+    _COLORMAP = LinearSegmentedColormap.from_list(
+        'humidity_cmap',
+        [
+            (0.0, '#e0f7fa'),   # Light cyan
+            (0.25, '#81d4fa'),  # Light blue
+            (0.5, '#4fc3f7'),   # Medium blue
+            (0.75, '#0288d1'),  # Deep blue
+            (1.0, '#01579b')    # Dark blue
+        ]
+    )
+
+    def __init__(self):
+        super().__init__()
+
+    def generate(self, stations, displaydate):
+        return self.generate_heatmap(
+            stations=stations,
+            colormap=self._COLORMAP,
+            displaydate=displaydate,
+            vmin=0, vmax=100,
+            label="Humidity (%)",
+            scale_min=0, scale_max=100
+        )
+
+
+class WindCreator(HeatmapCreator):
+    _COLORMAP = LinearSegmentedColormap.from_list(
+        'wind_cmap',
+        [
+            (0.0, '#e0f2f1'),   # Light teal
+            (0.25, '#80cbc4'),  # Teal
+            (0.5, '#26a69a'),   # Medium teal
+            (0.75, '#00897b'),  # Deep teal
+            (1.0, '#004d40')    # Dark teal
+        ]
+    )
+
+    def __init__(self):
+        super().__init__()
+
+    def generate(self, stations, displaydate):
+        return self.generate_heatmap(
+            stations=stations,
+            colormap=self._COLORMAP,
+            displaydate=displaydate,
+            vmin=0, vmax=15,
+            label="Wind (m/s)",
+            scale_min=0, scale_max=15
+        )
+
+
+class PrecipitationCreator(HeatmapCreator):
+    _COLORMAP = LinearSegmentedColormap.from_list(
+        'precipitation_cmap',
+        [
+            (0.0, '#f7fbff'),   # Very light blue
+            (0.25, '#c6dbef'),  # Light blue
+            (0.5, '#6baed6'),   # Medium blue
+            (0.75, '#2171b5'),  # Deep blue
+            (1.0, '#08306b')    # Dark blue
+        ]
+    )
+
+    def __init__(self):
+        super().__init__()
+
+    def generate(self, stations, displaydate):
+        return self.generate_heatmap(
+            stations=stations,
+            colormap=self._COLORMAP,
+            displaydate=displaydate,
+            vmin=0, vmax=10,
+            label="Precipitation (mm)",
+            scale_min=0, scale_max=10
+        )
 
