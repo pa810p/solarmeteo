@@ -14,7 +14,7 @@ from sqlalchemy.orm import sessionmaker
 
 from meteo_updater.MeteoUpdater import MeteoUpdater
 
-from logs import logs
+from logger import logs
 
 IMGW_STATION_ID = 'id_stacji'
 

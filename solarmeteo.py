@@ -7,24 +7,10 @@
 
 import configparser
 import optparse
-from datetime import datetime
-from io import BytesIO
-from urllib.parse import ParseResult
 
-from heatmap.data_provider import (TemperatureProvider, PressureProvider, PrecipitationProvider,
-                                   HumidityProvider, WindProvider)
-from heatmap.heatmap_creator import (TemperatureCreator, PressureCreator, PrecipitationCreator,
-                                     HumidityCreator, WindCreator)
-from logs import logs
+from heatmap.heatmap import HeatMap
+from logger import logs
 from meteo_updater import MeteoUpdater, SolarUpdater
-
-from heatmap.heatmap import Heatmap
-import threading
-
-from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor, as_completed
-import imageio.v2 as imageio
-
-# logger = logs.setup_custom_logger('main', 'DEBUG')
 
 
 def main():
@@ -52,9 +38,12 @@ def main():
     # TODO: this will be a coma separated list
     update = config['meteo.updater']['modules']
     heatmap = None
+    output_file = None
+    max_workers = 16
+    last_days = 1
 
     # and now overwrite them with command line if exists
-    parser = optparse.OptionParser(usage="%prog [-b] [-m] [-i] [-f] [-l]", version=ver, description=desc)
+    parser = optparse.OptionParser(usage="%prog [-b] [-m] [-i] [-f] [-l] [-o]", version=ver, description=desc)
 
     # parser.add_option('-d', '--daemonize', dest='daemonize', action='store_true', default=False,
     #                   help='run as daemon process')
@@ -77,7 +66,12 @@ def main():
     parser.add_option('--solar_url', dest='solar_url', help='solar base url')
     parser.add_option('--solar_update_interval', dest='solar_update_interval', help='solar update interval')
     parser.add_option('--solar-period', dest='solar_update_period', help='solar update from_date:to_date')
-    parser.add_option('--heatmap', dest='heatmap', help='generate map of: temperature, precipitation')
+    parser.add_option('--heatmap', dest='heatmap', help='generate map of: temperature, precipitation, humidity, pressure, windspeed')
+    parser.add_option('--last-days', dest='last_days', help='generate animated map from last n days', type=int, default=1)
+    parser.add_option('--file-format', dest='file_format', help='file format for heatmap: png, gif (animated), default is png', default='png')
+    parser.add_option('-o', '--output', dest='output_file', help='output file for heatmap, default is [heatmap].[png|gif]')
+    parser.add_option('--max-workers', dest='max_workers', help='workers used in parallel when generating animations', type=int, default=16)
+    parser.add_option('--progress', dest='progress', help='when generating heatmap indicates progressbar', action='store_true')
 
     # option not in properties
     # TODO: check if default can be set if empty in here
@@ -134,7 +128,20 @@ def main():
     if options.heatmap is not None and not '' and len(options.heatmap) != 0:
         heatmap = options.heatmap
 
+    if options.last_days is not None and not '':
+        last_days = options.last_days
+
+    if options.file_format is not None and not '' and len(options.file_format) != 0:
+        file_format = options.file_format
+
+    if options.output_file is not None and not '' and len(options.output_file) != 0:
+        output_file = options.output_file
+
+    if options.max_workers is not None and not '':
+        max_workers = options.max_workers
+
     logger = logs.setup_custom_logger('updater', log_level)
+    heatlog = logs.setup_custom_logger('heatmap', log_level)
 
     # if meteo_daemonize:
     #     try:
@@ -182,40 +189,16 @@ def main():
             solar_updater.update()
 
     if heatmap is not None:
-        logger.debug(f"Starting {heatmap} heatmap generation at {datetime.now()}")
-        provider_class = {
-            "temperature": (TemperatureProvider, TemperatureCreator),
-            "pressure": (PressureProvider, PressureCreator),
-            "precipitation": (PrecipitationProvider, PrecipitationCreator),
-            "humidity": (HumidityProvider, HumidityCreator),
-            "wind": (WindProvider, WindCreator)
-        }.get(heatmap)
+        if output_file is None:
+            output_file = heatmap
 
-        if provider_class is not None:
-            dataprovider = provider_class[0](meteo_db_url=meteo_db_url, last=24)
-            stations = dataprovider.provide()
-            heatmap_creator = provider_class[1]()
-            frames = []
-            with ProcessPoolExecutor(max_workers=16) as executor:
-                futures = [
-                    executor.submit(heatmap_creator.generate_image, stations=stations, displaydate=displaydate)
-                        for idx, (displaydate, stations) in enumerate(stations)
-                    ]
-
-                for future in as_completed(futures):
-                        frames.append(future.result())
-
-                sorted_frames = [image for datetime, image in sorted(frames, key=lambda x: x[0])]
-                imageio.mimsave(f"{heatmap}.gif", sorted_frames, duration=0.9, palettesize=256, subrectangles=True)
-                # imageio.mimsave("animation.mp4", sorted_frames, format="mp4", duration=0.2)  # Save as MP4# Duration per frame (sec)
-            logger.debug(f"{heatmap.capitalize()} heatmap generation completed at {datetime.now()}")
-        else:
-            logger.error(f"Unknown heatmap type: {heatmap}")
-
+        hm = HeatMap(meteo_db_url=meteo_db_url, last=last_days*1, file_format=file_format,
+                     output_file=output_file, heatmap_type=heatmap, max_workers=max_workers)
+        hm.generate()
 
 
 if __name__ == '__main__':
     desc = """This is a meteo analyzer"""
-    ver = "%prog 2.0 (c) 2019-2024 Pawel Prokop"
+    ver = "%prog 2.0 (c) 2019-2025 Pawel Prokop"
 
     main()

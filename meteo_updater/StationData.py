@@ -7,7 +7,7 @@
 
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, Float, DateTime, Sequence, ForeignKey
-import logs.logs
+import logger.logs
 
 Base = declarative_base()
 

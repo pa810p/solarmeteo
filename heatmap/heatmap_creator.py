@@ -60,6 +60,18 @@ class HeatmapCreator:
     def generate_heatmap(self, stations: list[StationValue], colormap=_COLORMAP, displaydate='', vmin=None, vmax=None,
                          label='Temperature (°C)',
                          scale_min=None, scale_max=None):
+        """
+        Generates a heatmap frame for the given stations.
+        :param stations: StationValue list containing longitude, latitude, value, and name.
+        :param colormap: Matplotlib colormap for the heatmap.
+        :param displaydate: Display date for the heatmap title.
+        :param vmin: Minimum value for the color scale.
+        :param vmax: Maximum value for the color scale.
+        :param label: Label for the colorbar.
+        :param scale_min: Minimum value for scaling the data.
+        :param scale_max: Maximum value for scaling the data.
+        :return: generated matplotlib figure.
+        """
 
         voivodeships_ll, poland_shape_projected = self._geometry
 
@@ -92,10 +104,9 @@ class HeatmapCreator:
         y_grid = np.linspace(bounds[1], bounds[3], 500)
         xx, yy = np.meshgrid(x_grid, y_grid)
 
-        # Interpolate using RBF
-        # rbf = Rbf(x, y, t, function='linear', smooth=5)
-        # grid_temp = rbf(xx, yy)
-        rbf = Rbf(x, y, temps_scaled, function='linear', smooth=5)
+        # scaling because RBF requires normalized values because of problems with large values
+        # it uses absolute values for interpolation
+        rbf = Rbf(x, y, temps_scaled, function='linear', smooth=1)
         grid_temp_scaled = rbf(xx, yy)
         if scale_min is not None and scale_max is not None:
             grid_temp = grid_temp_scaled * (scale_max - scale_min) + scale_min

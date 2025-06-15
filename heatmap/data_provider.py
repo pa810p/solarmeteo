@@ -95,8 +95,8 @@ class DataProvider:
 class TemperatureProvider(DataProvider):
 
 
-    def __init__(self, meteo_db_url, last=1, from_time=None, until_time=None):
-        super().__init__(meteo_db_url, last, from_time, until_time)
+    def __init__(self, meteo_db_url, last=1):
+        super().__init__(meteo_db_url, last)
 
 
     def provide(self, column="temperature"):
@@ -105,8 +105,8 @@ class TemperatureProvider(DataProvider):
 
 class PressureProvider(DataProvider):
 
-    def __init__(self, meteo_db_url, last=1, from_time=None, until_time=None):
-        super().__init__(meteo_db_url, last, from_time, until_time)
+    def __init__(self, meteo_db_url, last=1):
+        super().__init__(meteo_db_url, last)
 
 
     def provide(self, column="pressure"):
@@ -115,8 +115,8 @@ class PressureProvider(DataProvider):
 
 class HumidityProvider(DataProvider):
 
-    def __init__(self, meteo_db_url, last=1, from_time=None, until_time=None):
-        super().__init__(meteo_db_url, last, from_time, until_time)
+    def __init__(self, meteo_db_url, last=1):
+        super().__init__(meteo_db_url, last)
 
 
     def provide(self, column="humidity"):
@@ -125,8 +125,8 @@ class HumidityProvider(DataProvider):
 
 class  PrecipitationProvider(DataProvider):
 
-    def __init__(self, meteo_db_url, last=1, from_time=None, until_time=None):
-        super().__init__(meteo_db_url, last, from_time, until_time)
+    def __init__(self, meteo_db_url, last=1):
+        super().__init__(meteo_db_url, last)
 
 
     def provide(self, column="precipitation"):
@@ -135,8 +135,8 @@ class  PrecipitationProvider(DataProvider):
 
 class WindProvider(DataProvider):
 
-    def __init__(self, meteo_db_url, last=1, from_time=None, until_time=None):
-        super().__init__(meteo_db_url, last, from_time, until_time)
+    def __init__(self, meteo_db_url, last=1):
+        super().__init__(meteo_db_url, last)
 
     def provide(self, column="wind_speed"):
         return super().provide(column)
