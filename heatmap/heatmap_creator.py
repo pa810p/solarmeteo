@@ -59,9 +59,11 @@ class HeatmapCreator:
 
     def generate_heatmap(self, stations: list[StationValue], colormap=_COLORMAP, displaydate='', vmin=None, vmax=None,
                          label='Temperature (°C)',
-                         scale_min=None, scale_max=None):
+                         scale_min=None, scale_max=None,
+                         display_labels=None):
         """
         Generates a heatmap frame for the given stations.
+        :param display_labels: list of city names for those markers will be rendered
         :param stations: StationValue list containing longitude, latitude, value, and name.
         :param colormap: Matplotlib colormap for the heatmap.
         :param displaydate: Display date for the heatmap title.
@@ -73,8 +75,9 @@ class HeatmapCreator:
         :return: generated matplotlib figure.
         """
 
+        if display_labels is None:
+            display_labels = []
         voivodeships_ll, poland_shape_projected = self._geometry
-
         prepared_poland = prep(poland_shape_projected.buffer(1000))  # 1km buffer
 
         # Prepare station data
@@ -96,7 +99,7 @@ class HeatmapCreator:
         ).to_crs(self._CRS_PROJECTED)
 
         x, y = gdf.geometry.x.values, gdf.geometry.y.values
-        t = gdf.temperature.values
+        # t = gdf.temperature.values
 
         # Create interpolation grid
         bounds = poland_shape_projected.bounds
@@ -129,7 +132,7 @@ class HeatmapCreator:
         grid_lat = grid_points.geometry.y.values.reshape(yy.shape)
 
         # Create plot
-        fig, ax = plt.subplots(figsize=(12, 10))
+        fig, ax = plt.subplots(figsize=(6, 5))
 
         norm = Normalize(vmin=vmin, vmax=vmax)
         levels = np.linspace(vmin, vmax, 200)
@@ -148,30 +151,32 @@ class HeatmapCreator:
 
         # Station points with names
         for lon, lat, name, temp in zip(lons, lats, names, temps):
-            ax.scatter(
-                lon, lat,
-                c=[temp],
-                cmap=colormap,
-                norm=norm,
-                s=60,
-                edgecolor='black',
-                linewidth=0.8,
-                zorder=10
-            )
-            ax.text(
-                lon + 0.05, lat + 0.03,
-                f"{name} ({temp:.1f})",
-                fontsize=8,
-                ha='left',
-                va='bottom',
-                bbox=dict(facecolor='white', alpha=0.7, edgecolor='none', pad=1)
-            )
+
+            if name in display_labels:
+                ax.scatter(
+                    lon, lat,
+                    c=[temp],
+                    cmap=colormap,
+                    norm=norm,
+                    s=60,
+                    edgecolor='black',
+                    linewidth=0.4,
+                    zorder=10
+                )
+                ax.text(
+                    lon + 0.05, lat + 0.03,
+                    f"{name} ({temp:.1f})",
+                    fontsize=6,
+                    ha='left',
+                    va='bottom',
+                    bbox=dict(facecolor='white', alpha=0.7, edgecolor='none', pad=1)
+                )
 
         # Add administrative boundaries
         voivodeships_ll.boundary.plot(
             ax=ax,
             color='black',
-            linewidth=0.6
+            linewidth=0.3
         )
 
         # Colorbar
@@ -196,8 +201,8 @@ class HeatmapCreator:
         return fig
 
 
-    def generate_image(self, stations, displaydate):
-        fig = self.generate(stations=stations, displaydate=displaydate)
+    def generate_image(self, stations, displaydate, display_labels):
+        fig = self.generate(stations=stations, displaydate=displaydate, display_labels=display_labels)
         try:
             canvas = FigureCanvasAgg(fig)
             canvas.draw()
@@ -228,9 +233,11 @@ class TemperatureCreator(HeatmapCreator):
     def __init__(self):
         super().__init__()
 
-    def generate(self, stations, displaydate):
+    def generate(self, stations, displaydate, display_labels):
         return self.generate_heatmap(stations=stations, colormap=self._COLORMAP, displaydate=displaydate,
-                                     vmin=-5, vmax=30, label="Temperature (°C)")
+                                     vmin=-5, vmax=30, label="Temperature (°C)",
+                                     display_labels=display_labels)
+
 
 
 class PressureCreator(HeatmapCreator):
@@ -249,10 +256,11 @@ class PressureCreator(HeatmapCreator):
     def __init__(self):
         super().__init__()
 
-    def generate(self, stations, displaydate):
+    def generate(self, stations, displaydate, display_labels):
         return self.generate_heatmap(stations=stations, colormap=self._COLORMAP, displaydate=displaydate,
                                      vmin=1000, vmax=1030, label="Pressure (hPa)",
-                                     scale_min=960, scale_max=1040)
+                                     scale_min=960, scale_max=1040,
+                                     display_labels=display_labels)
 
 
 class HumidityCreator(HeatmapCreator):
@@ -270,14 +278,15 @@ class HumidityCreator(HeatmapCreator):
     def __init__(self):
         super().__init__()
 
-    def generate(self, stations, displaydate):
+    def generate(self, stations, displaydate, display_labels):
         return self.generate_heatmap(
             stations=stations,
             colormap=self._COLORMAP,
             displaydate=displaydate,
             vmin=0, vmax=100,
             label="Humidity (%)",
-            scale_min=0, scale_max=100
+            scale_min=0, scale_max=100,
+            display_labels=display_labels
         )
 
 
@@ -296,14 +305,15 @@ class WindCreator(HeatmapCreator):
     def __init__(self):
         super().__init__()
 
-    def generate(self, stations, displaydate):
+    def generate(self, stations, displaydate, display_labels):
         return self.generate_heatmap(
             stations=stations,
             colormap=self._COLORMAP,
             displaydate=displaydate,
             vmin=0, vmax=15,
             label="Wind (m/s)",
-            scale_min=0, scale_max=15
+            scale_min=0, scale_max=15,
+            display_labels=display_labels
         )
 
 
@@ -322,13 +332,14 @@ class PrecipitationCreator(HeatmapCreator):
     def __init__(self):
         super().__init__()
 
-    def generate(self, stations, displaydate):
+    def generate(self, stations, displaydate, display_labels):
         return self.generate_heatmap(
             stations=stations,
             colormap=self._COLORMAP,
             displaydate=displaydate,
             vmin=0, vmax=10,
             label="Precipitation (mm)",
-            scale_min=0, scale_max=10
+            scale_min=0, scale_max=10,
+            display_labels=display_labels
         )
 

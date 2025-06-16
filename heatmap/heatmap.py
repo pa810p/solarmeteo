@@ -9,10 +9,14 @@ import imageio.v2 as imageio
 from datetime import datetime
 from logging import getLogger
 from tqdm import tqdm
+from PIL import Image
 
 logger = getLogger("heatmap")
 
 class HeatMap:
+
+    display_labels = ['Kraków', 'Warszawa', 'Gdańsk', 'Wrocław', 'Szczecin', 'Poznań', 'Suwałki', 'Zakopane', 'Łódź',
+                      'Olsztyn', 'Lublin', 'Rzeszów']
 
     provider_classes = {
         "temperature": (TemperatureProvider, TemperatureCreator),
@@ -33,9 +37,9 @@ class HeatMap:
         logger.debug(f"HeatMap initialized with type: {heatmap_type}, last: {last}, file_format: {file_format}, output_file: {output_file}, max_workers: {max_workers}")
 
 
-    def _generate_gif(self):
+    def _generate_frames(self):
         """
-        Generates a heatmap GIF for the specified type and time range.
+        Generates a matmplot frames for the specified type and time range.
         :return frame
         """
         if self.heatmap_type not in self.provider_classes:
@@ -51,6 +55,7 @@ class HeatMap:
             provider_class = self.provider_classes[self.heatmap_type]
             dataprovider = provider_class[0](meteo_db_url=self.meteo_db_url, last=self.last)
             stations = dataprovider.provide()
+
             pbar.set_description(f"Generating {self.heatmap_type} figures")
             pbar.update(1)
             if len(stations) < self.last:
@@ -61,7 +66,7 @@ class HeatMap:
             frames = []
             with ProcessPoolExecutor(max_workers=self.max_workers) as executor:
                 futures = [
-                    executor.submit(heatmap_creator.generate_image, stations=stations, displaydate=displaydate)
+                    executor.submit(heatmap_creator.generate_image, stations=stations, displaydate=displaydate, display_labels=self.display_labels)
                     for idx, (displaydate, stations) in enumerate(stations)
                 ]
 
@@ -71,10 +76,14 @@ class HeatMap:
 
             pbar.set_description(f"Saving {self.heatmap_type}.{self.file_format}")
             pbar.update(1)
-            sorted_frames = [image for datetime, image in sorted(frames, key=lambda x: x[0])]
-            imageio.mimsave(f"{self.heatmap_type}.{self.file_format}", sorted_frames, fps=5, palettesize=256, subrectangles=True)
-            # imageio.mimsave("animation.mp4", sorted_frames, format="mp4", duration=0.2)  # Save as MP4# Duration per frame (sec)
-            logger.debug(f"{self.heatmap_type.capitalize()} heatmap generation completed at {datetime.now()}")
+            return [image for datetime, image in sorted(frames, key=lambda x: x[0])]
+
+
+    def _generate_gif(self):
+        frames = self._generate_frames()
+        imageio.mimsave(f"{self.heatmap_type}.{self.file_format}", frames, fps=5, palettesize=256, subrectangles=True)
+        # imageio.mimsave("animation.mp4", sorted_frames, format="mp4", duration=0.2)  # Save as MP4# Duration per frame (sec)
+        logger.debug(f"{self.heatmap_type.capitalize()} heatmap generation completed at {datetime.now()}")
 
 
     def _generate_png(self):
@@ -88,13 +97,28 @@ class HeatMap:
         stations = dataprovider.provide()
 
         heatmap_creator = provider_class[1]()
-        generated_frame = heatmap_creator.generate_image(stations=stations[0][1], displaydate=stations[0][0])
+        generated_frame = heatmap_creator.generate_image(stations=stations[0][1], displaydate=stations[0][0], display_labels=self.display_labels)
 
         if generated_frame is None:
             logger.error(f"Failed to generate heatmap for {self.heatmap_type} with last={self.last}")
             return
 
         imageio.imwrite(f"{self.output_file}.{self.file_format}", generated_frame[1])
+        logger.debug(f"{self.heatmap_type.capitalize()} heatmap generation completed at {datetime.now()}")
+
+
+    def _generate_webp(self):
+        frames = self._generate_frames()
+
+        pil_frames = [Image.fromarray(frame) for frame in frames]
+        pil_frames[0].save(
+            f"{self.output_file}.{self.file_format}",
+            save_all=True,
+            append_images=pil_frames[1:],
+            duration=200,
+            loop=0,
+            quality=85  # Adjust quality (0-100)
+        )
 
         logger.debug(f"{self.heatmap_type.capitalize()} heatmap generation completed at {datetime.now()}")
 
@@ -103,6 +127,7 @@ class HeatMap:
         match self.file_format:
             case 'gif': self._generate_gif()
             case 'png': self._generate_png()
+            case 'webp': self._generate_webp()
             case _: raise ValueError(f"Unsupported file format: {self.file_format}")
 
 
