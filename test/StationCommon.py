@@ -4,7 +4,7 @@
 # License       : GNU GENERAL PUBLIC LICENSE v3
 ###
 
-from meteo_updater.Station import Station
+from model.station import Station
 
 IMGW_ID = 123456
 

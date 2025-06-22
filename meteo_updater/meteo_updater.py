@@ -7,9 +7,9 @@
 
 import time
 from datetime import datetime, timedelta
-from meteo_updater import StationData
-from meteo_updater.Updater import Updater
-from meteo_updater import Station
+from model.station_data import StationData
+from model.station import Station
+from meteo_updater.updater import Updater
 
 from logging import getLogger
 

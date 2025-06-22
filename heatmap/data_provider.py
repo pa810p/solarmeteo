@@ -7,8 +7,8 @@ import numpy as np
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import sessionmaker
 
-from meteo_updater.Station import Station
-from meteo_updater.StationData import StationData
+from model.station import Station
+from model.station_data import StationData
 
 
 @dataclass

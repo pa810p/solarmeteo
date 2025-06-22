@@ -12,7 +12,7 @@ from sqlalchemy.orm import sessionmaker
 from test import StationCommon
 from test.StationCommon import create_station
 from test.DBManager import DBManager
-from meteo_updater.StationData import StationData
+from model.station_data import StationData
 
 
 class TestStationData(unittest.TestCase):

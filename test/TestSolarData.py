@@ -9,7 +9,7 @@ from datetime import datetime
 
 from sqlalchemy.orm import sessionmaker
 
-from meteo_updater.SolarData import SolarData
+from model.solar_data import SolarData
 from test import SolarCommon
 from test.DBManager import DBManager
 

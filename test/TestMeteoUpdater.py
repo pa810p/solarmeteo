@@ -12,7 +12,7 @@ from test.DBManager import DBManager
 from test import StationCommon, Config
 from sqlalchemy.orm import sessionmaker
 
-from meteo_updater.MeteoUpdater import MeteoUpdater
+from meteo_updater.meteo_updater import MeteoUpdater
 
 from logger import logs
 

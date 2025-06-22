@@ -4,7 +4,7 @@
 # License       : GNU GENERAL PUBLIC LICENSE v3
 ###
 
-from meteo_updater.SolarData import SolarData
+from model.solar_data import SolarData
 
 
 def remove_all_solar_data(session):

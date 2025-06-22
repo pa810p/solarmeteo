@@ -10,7 +10,8 @@ import optparse
 
 from heatmap.heatmap import HeatMap
 from logger import logs
-from meteo_updater import MeteoUpdater, SolarUpdater
+from meteo_updater.meteo_updater import MeteoUpdater
+from meteo_updater.solar_updater import SolarUpdater
 
 
 def main():

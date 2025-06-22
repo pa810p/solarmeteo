@@ -13,7 +13,7 @@ from sqlalchemy.orm import sessionmaker
 import json
 
 from logger import logs
-from meteo_updater.SolarUpdater import SolarUpdater
+from meteo_updater.solar_updater import SolarUpdater
 from test.DBManager import DBManager
 from test import StationCommon, Config
 

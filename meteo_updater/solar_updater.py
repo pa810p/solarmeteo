@@ -4,14 +4,12 @@
 # License       : GNU GENERAL PUBLIC LICENSE v3
 ###
 
-from datetime import time, datetime
-
-from sqlalchemy.orm import Session
+from datetime import datetime
 
 from meteo_updater import sun
-from meteo_updater.SolarData import SolarData
-from meteo_updater.Updater import Updater
-from meteo_updater.SunData import SunData
+from model.solar_data import SolarData
+from meteo_updater.updater import Updater
+from model.sun_data import SunData
 
 
 class SolarUpdater(Updater):
