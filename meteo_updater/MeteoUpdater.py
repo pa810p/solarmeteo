@@ -6,14 +6,16 @@
 
 
 import time
-from datetime import datetime
-from datetime import timedelta
+from datetime import datetime, timedelta
 from meteo_updater import StationData
 from meteo_updater.Updater import Updater
 from meteo_updater import Station
 
+from logging import getLogger
+
 import sqlalchemy.exc
 
+logger = getLogger("updater")
 
 class MeteoUpdater (Updater):
     """
@@ -37,13 +39,13 @@ class MeteoUpdater (Updater):
         result = session.query(Station.Station).filter_by(imgw_id=int(imgw_station_id)).all()
         if len(result) > 1:
             # this shouldn't happen due to database constraints
-            self.logger.error(f'Too many records for station id: {imgw_station_id} returning first')
+            logger.error(f'Too many records for station id: {imgw_station_id} returning first')
             raise Exception('Database has more than one imgw id')
 
         if len(result) == 1:
             return result[0]
 
-        self.logger.error(f'station not found id: {imgw_station_id}')
+        logger.error(f'station not found id: {imgw_station_id}')
         return None
 
     def save_station(self, session, station_json):
@@ -55,7 +57,7 @@ class MeteoUpdater (Updater):
         station = Station.Station(name=station_json[Station.IMGW_STATION_NAME],
                                   imgw_id=int(station_json[Station.IMGW_STATION_ID])
                                   )
-        self.logger.info('Attempting to create new station: %s' % station)
+        logger.info('Attempting to create new station: %s' % station)
         session.add(station)
         return station
 
@@ -63,7 +65,7 @@ class MeteoUpdater (Updater):
         """
         Saves meteorogical data of a station
         """
-        self.logger.debug('Saving station data')
+        logger.debug('Saving station data')
         # Update station meteorology data
         station_data = StationData.StationData(station_id,
                                                self.create_datetime(station_json[StationData.IMGW_DATE],
@@ -83,7 +85,7 @@ class MeteoUpdater (Updater):
         Returns station coordination information from configured file
         :return list of tuples: station id, station lat, station lon
         """
-        self.logger.debug(f'Getting coordinates data from a file: {self.updater_update_station_coordinates_file}')
+        logger.debug(f'Getting coordinates data from a file: {self.updater_update_station_coordinates_file}')
 
         station_coordinates = []
 
@@ -123,12 +125,12 @@ class MeteoUpdater (Updater):
         if station is None:
             station = self.save_station(session, station_json)
             session.commit()
-            self.logger.info('Created new station %r' % station)
+            logger.info('Created new station %r' % station)
         else:
-            self.logger.debug('Got station: %r' % station)
+            logger.debug('Got station: %r' % station)
 
         if self.updater_update_station_coordinates:
-            self.logger.debug('Will update station coordinates')
+            logger.debug('Will update station coordinates')
             (lon, lat) = self.find_station_coordinates(station.imgw_id, coordinates)
             if lon is not None and lat is not None:
                 self.logger.debug('Update coordinates.')
@@ -137,14 +139,14 @@ class MeteoUpdater (Updater):
                 session.commit()
         try:
             self.save_station_data(session, station.id, station_json)
-            self.logger.debug('Commit station info')
+            logger.debug('Commit station info')
             session.commit()
         except sqlalchemy.exc.IntegrityError as exception:
             # it's a common error because third party meteo stations do not upgrade server regularly
-            self.logger.warn('StationData IntegrityError: %s' % exception.orig)
+            logger.warning('StationData IntegrityError: %s' % exception.orig)
             session.rollback()
         except Exception as exception:
-            self.logger.error('StationData error: %s' % exception)
+            logger.error('StationData error: %s' % exception)
             session.rollback()
 
     def update_stations(self, session, stations_json, coordinates):
@@ -164,7 +166,7 @@ class MeteoUpdater (Updater):
         configured in properties file or command line parameters
         TODO: This method is not UNIT TESTED!
         """
-        self.logger.info('IMGW Updating')
+        logger.info('IMGW Updating')
 
         coordinates = None
         if self.updater_update_station_coordinates:
@@ -172,11 +174,11 @@ class MeteoUpdater (Updater):
 
         session = self.create_session()
         stations_json = self.get(self.meteo_data_url)
-        self.logger.info('Received %s stations.' % str(len(stations_json)))
+        logger.info('Received %s stations.' % str(len(stations_json)))
 
         self.update_stations(session, stations_json, coordinates)
 
-        self.logger.debug('Closing connections')
+        logger.debug('Closing connections')
         session.close_all()
 
     def update_daemonize(self):
@@ -186,8 +188,8 @@ class MeteoUpdater (Updater):
         TODO: This method is not UNIT TESTED!
         """
         while True:
-            self.logger.info('IMGW will update as a daemon')
+            logger.info('IMGW will update as a daemon')
             self.update()
 
-            self.logger.debug(f'IMGW is going to sleep for {self.updater_interval} seconds')
+            logger.debug(f'IMGW is going to sleep for {self.updater_interval} seconds')
             time.sleep(int(self.updater_interval))
