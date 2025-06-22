@@ -3,6 +3,9 @@ alembic.ini
 alembic_test.ini
 meteo.properties
 meteo_test.properties
+db/init.sql
+Dockerfile
+docker-compose.yml
 
 # for local tests
 testing.py
