@@ -7,8 +7,9 @@
 
 import time
 from datetime import datetime, timedelta
-from model.station_data import StationData
-from model.station import Station
+from model.station_data import StationData, IMGW_DATE, IMGW_HOUR, IMGW_TEMPERATURE, IMGW_WIND_SPEED, \
+    IMGW_WIND_DIRECTION, IMGW_HUMIDITY, IMGW_PRECIPITATION, IMGW_PRESSURE
+from model.station import Station, IMGW_STATION_ID, IMGW_STATION_NAME
 from meteo_updater.updater import Updater
 
 from logging import getLogger
@@ -36,7 +37,7 @@ class MeteoUpdater (Updater):
         :param imgw_station_id id of imgw station
         :return station
         """
-        result = session.query(Station.Station).filter_by(imgw_id=int(imgw_station_id)).all()
+        result = session.query(Station).filter_by(imgw_id=int(imgw_station_id)).all()
         if len(result) > 1:
             # this shouldn't happen due to database constraints
             logger.error(f'Too many records for station id: {imgw_station_id} returning first')
@@ -54,8 +55,8 @@ class MeteoUpdater (Updater):
         :param session database session
         :param station_json station information as json object
         """
-        station = Station.Station(name=station_json[Station.IMGW_STATION_NAME],
-                                  imgw_id=int(station_json[Station.IMGW_STATION_ID])
+        station = Station(name=station_json[IMGW_STATION_NAME],
+                                  imgw_id=int(station_json[IMGW_STATION_ID])
                                   )
         logger.info('Attempting to create new station: %s' % station)
         session.add(station)
@@ -67,15 +68,15 @@ class MeteoUpdater (Updater):
         """
         logger.debug('Saving station data')
         # Update station meteorology data
-        station_data = StationData.StationData(station_id,
-                                               self.create_datetime(station_json[StationData.IMGW_DATE],
-                                                                    station_json[StationData.IMGW_HOUR]),
-                                               station_json[StationData.IMGW_TEMPERATURE],
-                                               station_json[StationData.IMGW_WIND_SPEED],
-                                               station_json[StationData.IMGW_WIND_DIRECTION],
-                                               station_json[StationData.IMGW_HUMIDITY],
-                                               station_json[StationData.IMGW_PRECIPITATION],
-                                               station_json[StationData.IMGW_PRESSURE])
+        station_data = StationData(station_id,
+                                               self.create_datetime(station_json[IMGW_DATE],
+                                                                    station_json[IMGW_HOUR]),
+                                               station_json[IMGW_TEMPERATURE],
+                                               station_json[IMGW_WIND_SPEED],
+                                               station_json[IMGW_WIND_DIRECTION],
+                                               station_json[IMGW_HUMIDITY],
+                                               station_json[IMGW_PRECIPITATION],
+                                               station_json[IMGW_PRESSURE])
 
         session.add(station_data)
         return station_data
@@ -157,7 +158,7 @@ class MeteoUpdater (Updater):
         :param coordinates station coordinates that have been read from external configuration file
         """
         for station_json in stations_json:
-            station = self.find_station_by_imgw_id(session, station_json[Station.IMGW_STATION_ID])
+            station = self.find_station_by_imgw_id(session, station_json[IMGW_STATION_ID])
             self.update_station(session, station, station_json, coordinates)
 
     def update(self):

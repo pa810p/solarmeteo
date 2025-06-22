@@ -163,7 +163,7 @@ def main():
 
     # TODO: should be a list imgw, solar, something, all
     if update == 'both' or update == 'imgw':
-        imgw_updater = MeteoUpdater.MeteoUpdater(
+        imgw_updater = MeteoUpdater(
             meteo_db_url=meteo_db_url,
             meteo_data_url=imgw_data_url,
             updater_interval=imgw_update_interval,
@@ -173,7 +173,7 @@ def main():
         imgw_updater.update()
 
     if update == 'both' or update == 'solar':
-        solar_updater = SolarUpdater.SolarUpdater(
+        solar_updater = SolarUpdater(
             meteo_db_url=meteo_db_url,
             data_url=solar_url,
             updater_interval=solar_update_interval,
