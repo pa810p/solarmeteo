@@ -5,11 +5,14 @@
 ###
 
 from datetime import datetime
+from logging import getLogger
 
 from meteo_updater import sun
 from model.solar_data import SolarData
 from meteo_updater.updater import Updater
 from model.sun_data import SunData
+
+logger = getLogger("updater")
 
 
 class SolarUpdater(Updater):
@@ -36,7 +39,7 @@ class SolarUpdater(Updater):
         This method updates current data of the configured solar power
         TODO: This method is not UNIT TESTED!
         """
-        self.logger.info('SolarData.py updating')
+        logger.info('SolarData.py updating')
 
         solar_data = self.download_current_solar_data()
 
@@ -58,7 +61,7 @@ class SolarUpdater(Updater):
         session.commit()
         session.close()
 
-        self.logger.debug('Updated: %r' % solar_data)
+        logger.debug('Updated: %r' % solar_data)
 
     def update_from_file(self, file_name):
         """
@@ -66,7 +69,7 @@ class SolarUpdater(Updater):
         :param file_name:
         :return: 
         """
-        self.logger.info('SolarData.py updating from file %s' % file_name)
+        logger.info('SolarData.py updating from file %s' % file_name)
         # TODO: it should combine data from a file with existing in database
 
     def update_datetime_period(self, date_period):
@@ -83,16 +86,16 @@ class SolarUpdater(Updater):
 
         # propagate data to database
         for measure in data['energy']['values']:
-            self.logger.debug('date: %s, measure: %s' % (measure['date'], measure['value']))
+            logger.debug('date: %s, measure: %s' % (measure['date'], measure['value']))
             entity = session.query(SolarData).filter_by(datetime=measure['date'])
             if entity is None:
                 # create new object
-                self.logger.debug('creating new solar_data entry')
+                logger.debug('creating new solar_data entry')
                 solar_data = SolarData(datetime=measure['date'], power=measure['value'])
                 session.add(solar_data)
                 session.commit()
             else:  # update existing data
-                self.logger.debug('updating existing solar_data entry')
+                logger.debug('updating existing solar_data entry')
                 entity.power = measure['value']
                 session.commit()
 
@@ -106,7 +109,7 @@ class SolarUpdater(Updater):
         url = '%s/site/%s/energy?timeUnit=QUARTER_OF_AN_HOUR' \
               '&startDate=%s&endDate=%s&api_key=%s' \
               % (self.data_url, self.site_id, from_date, to_date, self.solar_key)
-        self.logger.debug(url)
+        logger.debug(url)
         return self.get(url)
 
 #    def update_daemonize(self):
