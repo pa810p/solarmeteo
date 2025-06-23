@@ -7,15 +7,12 @@
 
 import subprocess
 
-from test import Config
+from tests import Config
 
 import sqlalchemy
 
 
-INIT_COMPLETE_SQL = '../sql/init_complete.sql'
-REMOVE_COMPLETE_SQL = '../sql/remove_complete.sql'
-
-ALEMBIC_CONFIG_FILE = 'alembic_test.ini'
+ALEMBIC_CONFIG_FILE = 'tests/resources/alembic_test.ini'
 
 
 class DBManager:

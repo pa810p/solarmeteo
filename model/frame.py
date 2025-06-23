@@ -9,7 +9,9 @@ class Frame(Base):
     id = Column(Integer, primary_key=True)
     type_id = Column(Integer, ForeignKey('frame_types.id'), nullable=False)
     datetime = Column(DateTime, nullable=False)
-    body = Column(String, nullable=False)  # base64-encoded string
+    body = Column(String, nullable=False)  # compresed base64-encoded string
+    dtype = Column(String(20)) # needed to fully restore ndarray
+    shape = Column(String(50)) # needed to fully restore ndarray
 
     type = relationship('FrameType', back_populates='frames')
 

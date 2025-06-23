@@ -54,6 +54,8 @@ class MeteoUpdater (Updater):
         Stores new station to database.
         :param session database session
         :param station_json station information as json object
+        :deprecated: this method is deprecated, functionality to be removed
+        :return: Station object
         """
         station = Station(name=station_json[IMGW_STATION_NAME],
                                   imgw_id=int(station_json[IMGW_STATION_ID])
@@ -117,9 +119,9 @@ class MeteoUpdater (Updater):
 
     def update_station(self, session, station, station_json, coordinates):
         """
-        Rpdates station (if it's not recognized in the system) and station data
+        Updates station (if it's not recognized in the system) and station data
         :param session database session
-        :param station station obcject
+        :param station station object
         :param station_json whole station_data object that contains station data and conditions
         :param coordinates station coordinates that have been read from external configuration file
         """

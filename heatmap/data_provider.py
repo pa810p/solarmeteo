@@ -1,3 +1,5 @@
+import base64
+import zlib
 from dataclasses import dataclass
 from operator import and_
 from collections import defaultdict
@@ -7,6 +9,7 @@ import numpy as np
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import sessionmaker
 
+from model.frame import FrameType, Frame
 from model.station import Station
 from model.station_data import StationData
 
@@ -43,15 +46,25 @@ class DataProvider:
         session = sessionmaker(bind=self.create_connection())
         return session()
 
-    def provide(self, column):
+
+    def get_last_datetimes(self, last):
         session = self.create_session()
 
         latest_datetimes = session.execute(
             select(StationData.datetime)
             .distinct()
             .order_by(StationData.datetime.desc())
-            .limit(self.last)
+            .limit(last)
         ).scalars().all()
+
+        session.close()
+
+        return latest_datetimes
+
+
+    def provide_stations_by_datetimes(self, column, datetimes):
+
+        session = self.create_session()
 
         # Dynamically get the column from StationData
         data_column = getattr(StationData, column)
@@ -67,7 +80,7 @@ class DataProvider:
             .join(Station, Station.id == StationData.station_id)
             .where(
                 and_(
-                    StationData.datetime.in_(latest_datetimes),
+                    StationData.datetime.in_(datetimes),
                     data_column.isnot(None)
                 )
             )
@@ -91,9 +104,65 @@ class DataProvider:
         return sorted_map
 
 
+    def provide(self, column):
+        latest_datetimes = self.get_last_datetimes(self.last)
+        return self.provide_stations_by_datetimes(column, latest_datetimes)
+
+
+    def provide_frames_by_type_and_datetimes(self, heatmap, target_datetimes):
+        session = self.create_session()
+        result = ((session.query(Frame.datetime, Frame.body, Frame.dtype, Frame.shape)
+                .join(FrameType))
+                .filter(
+                FrameType.name == heatmap,
+                        Frame.datetime.in_(target_datetimes)
+            )).all()
+
+        session.close()
+
+        frames = {}
+        for (datetime, body, dtype, shape) in result:
+            frames [datetime] = np.frombuffer(
+                    zlib.decompress(base64.b64decode(body)),
+                    dtype=np.dtype(dtype)
+                ).reshape(tuple(int(x) for x in shape.split(',')))
+
+
+        return frames
+
+
+    # def provide_frames(self, heatmap):
+    #     latest_datetimes = self.get_last_datetimes(self.last)
+    #     frames = self.get_frames_by_type_and_datetimes(heatmap, latest_datetimes)
+    #     return frames
+
+
+    def store_frames(self, heatmap, frames):
+        session = self.create_session()
+
+        frame_type = session.query(FrameType).filter_by(name=heatmap).first()
+        if not frame_type:
+            frame_type = FrameType(name=heatmap)
+            session.add(frame_type)
+            session.flush()  # Generate ID for new type
+
+        for (datetime, frame) in frames:
+            assert isinstance(frame, np.ndarray)
+            new_frame = Frame(
+                type_id=frame_type.id,
+                datetime=datetime,
+                body=base64.b64encode(zlib.compress(frame.tobytes())).decode('utf-8'),
+                dtype=str(frame.dtype),
+                shape=','.join(map(str, frame.shape))
+            )
+            session.add(new_frame)
+
+        session.commit()
+        session.close()
+
+
 
 class TemperatureProvider(DataProvider):
-
 
     def __init__(self, meteo_db_url, last=1):
         super().__init__(meteo_db_url, last)
@@ -101,6 +170,9 @@ class TemperatureProvider(DataProvider):
 
     def provide(self, column="temperature"):
         return super().provide(column)
+
+    def provide_frames_by_type_and_datetimes(self, heatmap="temperature", datetimes = None):
+        return super().provide_frames_by_type_and_datetimes(heatmap, datetimes)
 
 
 class PressureProvider(DataProvider):
@@ -112,15 +184,20 @@ class PressureProvider(DataProvider):
     def provide(self, column="pressure"):
         return super().provide(column)
 
+    def provide_frames_by_type_and_datetimes(self, heatmap="pressure", datetimes = None):
+        return super().provide_frames_by_type_and_datetimes(heatmap, datetimes)
+
 
 class HumidityProvider(DataProvider):
 
     def __init__(self, meteo_db_url, last=1):
         super().__init__(meteo_db_url, last)
 
-
     def provide(self, column="humidity"):
         return super().provide(column)
+
+    def provide_frames_by_type_and_datetimes(self, heatmap="humidity", datetimes = None):
+        return super().provide_frames_by_type_and_datetimes(heatmap, datetimes)
 
 
 class  PrecipitationProvider(DataProvider):
@@ -128,9 +205,11 @@ class  PrecipitationProvider(DataProvider):
     def __init__(self, meteo_db_url, last=1):
         super().__init__(meteo_db_url, last)
 
-
     def provide(self, column="precipitation"):
         return super().provide(column)
+
+    def provide_frames_by_type_and_datetimes(self, heatmap="precipitation", datetimes = None):
+        return super().provide_frames_by_type_and_datetimes(heatmap, datetimes)
 
 
 class WindProvider(DataProvider):
@@ -140,3 +219,7 @@ class WindProvider(DataProvider):
 
     def provide(self, column="wind_speed"):
         return super().provide(column)
+
+    def provide_frames_by_type_and_datetimes(self, heatmap="wind", datetimes = None):
+        return super().provide_frames_by_type_and_datetimes(heatmap, datetimes)
+

@@ -1,8 +1,8 @@
 # solarmeteo configuration files
 alembic.ini
-alembic_test.ini
+tests/resources/alembic_test.ini
 meteo.properties
-meteo_test.properties
+tests/resources/meteo_test.properties
 db/init.sql
 Dockerfile
 docker-compose.yml

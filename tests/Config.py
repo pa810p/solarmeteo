@@ -9,5 +9,5 @@ import configparser
 
 def read_config():
     config = configparser.ConfigParser(interpolation=configparser.ExtendedInterpolation())
-    config.read('meteo_test.properties')
+    config.read('tests/resources/meteo_test.properties')
     return config

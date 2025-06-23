@@ -15,8 +15,12 @@ logger = getLogger("heatmap")
 
 class HeatMap:
 
+    heatmaps = [
+        "temperature", "pressure", "precipitation", "humidity", "wind"
+    ]
+
     display_labels = ['Kraków', 'Warszawa', 'Gdańsk', 'Wrocław', 'Szczecin', 'Poznań', 'Suwałki', 'Zakopane', 'Łódź',
-                      'Olsztyn', 'Lublin', 'Rzeszów']
+                      'Olsztyn', 'Lublin', 'Rzeszów', 'Zielona Góra', 'Białystok']
 
     provider_classes = {
         "temperature": (TemperatureProvider, TemperatureCreator),
@@ -27,14 +31,22 @@ class HeatMap:
     }
 
 
-    def __init__(self, meteo_db_url, last=1, file_format='png', output_file='png', heatmap_type='temperature', max_workers=16):
+    def __init__(self, meteo_db_url, last=1, file_format='png', output_file='png', heatmap_type='temperature', max_workers=16, overwrite=True, cache=True):
         self.meteo_db_url = meteo_db_url
         self.last = last
         self.file_format = file_format
         self.output_file = output_file
         self.heatmap_type = heatmap_type
         self.max_workers = max_workers
-        logger.debug(f"HeatMap initialized with type: {heatmap_type}, last: {last}, file_format: {file_format}, output_file: {output_file}, max_workers: {max_workers}")
+        self.overwrite = overwrite
+        self.cache = cache
+
+        provider_class = self.provider_classes[self.heatmap_type]
+        self.dataprovider = provider_class[0](meteo_db_url=self.meteo_db_url, last=self.last)
+        self.heatmap_creator = provider_class[1]()
+
+        logger.debug(f"HeatMap initialized with type: {heatmap_type}, last: {last}, file_format: {file_format}, output_file: {output_file}, max_workers: {max_workers}," \
+                + "overwrite: {overwrite}, cache: {cache}")
 
 
     def _generate_frames(self):
@@ -54,6 +66,9 @@ class HeatMap:
             pbar.update(1)
             provider_class = self.provider_classes[self.heatmap_type]
             dataprovider = provider_class[0](meteo_db_url=self.meteo_db_url, last=self.last)
+
+            frames = []
+
             stations = dataprovider.provide()
 
             pbar.set_description(f"Generating {self.heatmap_type} figures")
@@ -63,7 +78,7 @@ class HeatMap:
                 pbar.refresh()
 
             heatmap_creator = provider_class[1]()
-            frames = []
+
             with ProcessPoolExecutor(max_workers=self.max_workers) as executor:
                 futures = [
                     executor.submit(heatmap_creator.generate_image, stations=stations, displaydate=displaydate, display_labels=self.display_labels)
@@ -79,6 +94,43 @@ class HeatMap:
             return [image for datetime, image in sorted(frames, key=lambda x: x[0])]
 
 
+    def _generate_frames_by_datetimes(self, datetimes):
+        frames = []
+        stations = self.dataprovider.provide_stations_by_datetimes(self.heatmap_type, datetimes)
+
+        with ProcessPoolExecutor(max_workers=self.max_workers) as executor:
+            futures = [
+                executor.submit(self.heatmap_creator.generate_image, stations=stations, displaydate=displaydate, display_labels=self.display_labels)
+                for idx, (displaydate, stations) in enumerate(stations)
+            ]
+
+            for future in as_completed(futures):
+                frames.append(future.result())
+
+        return frames
+
+
+    def _get_frames_from_cache(self, datetime):
+        frames = self.dataprovider.provide_frames_by_type_and_datetimes(self.heatmap_type, datetime)
+        return frames
+
+
+    def _get_frames(self):
+        last_datetimes =  self.dataprovider._get_last_datetimes(last=self.last)
+        cached_frames = self._get_frames_from_cache(last_datetimes)
+
+        map_keys = set(cached_frames.keys())
+        list_set = set(last_datetimes)
+        missing = list(list_set - map_keys)
+
+        generated_frames = self._generate_frames_by_datetimes(missing)
+
+        # if self.cache:
+        #     self.dataprovider.store_frames(generated_frames)
+
+        return [image for datetime, image in sorted(cached_frames + generated_frames, key=lambda x: x[0])]
+
+
     def _generate_gif(self):
         frames = self._generate_frames()
         imageio.mimsave(f"{self.heatmap_type}.{self.file_format}", frames, fps=5, palettesize=256, subrectangles=True)
@@ -86,7 +138,7 @@ class HeatMap:
         logger.debug(f"{self.heatmap_type.capitalize()} heatmap generation completed at {datetime.now()}")
 
 
-    def _generate_png(self):
+    def _generate_frame(self):
         if self.heatmap_type not in self.provider_classes:
             raise ValueError(f"Unsupported heatmap type: {self.heatmap_type}")
 
@@ -103,8 +155,20 @@ class HeatMap:
             logger.error(f"Failed to generate heatmap for {self.heatmap_type} with last={self.last}")
             return
 
+        return generated_frame
+
+
+    def _generate_png(self):
+        generated_frame = self._generate_frame()
+
         imageio.imwrite(f"{self.output_file}.{self.file_format}", generated_frame[1])
         logger.debug(f"{self.heatmap_type.capitalize()} heatmap generation completed at {datetime.now()}")
+
+
+    def _generate_cache(self):
+        last_datetimes = self.dataprovider.get_last_datetimes(self.last)
+        generated_frame = self._generate_frames_by_datetimes(last_datetimes)
+        self.dataprovider.store_frames(self.heatmap_type, generated_frame)
 
 
     def _generate_webp(self):
@@ -128,7 +192,9 @@ class HeatMap:
             case 'gif': self._generate_gif()
             case 'png': self._generate_png()
             case 'webp': self._generate_webp()
+            case 'cache': self._generate_cache()
             case _: raise ValueError(f"Unsupported file format: {self.file_format}")
+
 
 
 
