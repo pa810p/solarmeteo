@@ -6,15 +6,18 @@ used to analyze the correlation between weather conditions and power generation 
 - Solar data is taken from SolarEdge™ server using their API.
   :bulb: To use this feature it's necessary to have SolarEdge™
   photovoltaic installation with site_id and generated key_id on https://monitoring.solaredge.com
+- Basing on the data stored in database, it is possible to generate **heatmap** of meteorological conditions in Poland using period of time.
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/9bdcb1e1-1f95-491c-85f7-f7b25a4675b6" width="400">
+</p>
 
-SolarMeteo stores data for either meteo or solar in separate application calls.
+<a href="https://pawelprokop.pl/heatmaps.html">Link to more animated examples</a>
 
-Basing on the data stored in database, it is possible to generate reports and charts using Grafana or any other reporting tool:
+- It is also possible to generate reports and charts using Grafana or any other reporting tool:
 <p align="center">
   <img src="https://github.com/pa810p/solarmeteo/assets/46489402/587cd1e6-7af7-456a-ac60-c32938a5a389">
 </p>
 
-It is also possible to generate **heatmap** of meteorological conditions in Poland using period of time.
 
 
 ## Installation
