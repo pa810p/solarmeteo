@@ -8,9 +8,14 @@ used to analyze the correlation between weather conditions and power generation 
   photovoltaic installation with site_id and generated key_id on https://monitoring.solaredge.com
 
 SolarMeteo stores data for either meteo or solar in separate application calls.
+
+Basing on the data stored in database, it is possible to generate reports and charts using Grafana or any other reporting tool:
 <p align="center">
   <img src="https://github.com/pa810p/solarmeteo/assets/46489402/587cd1e6-7af7-456a-ac60-c32938a5a389">
 </p>
+
+It is also possible to generate **heatmap** of meteorological conditions in Poland using period of time.
+
 
 ## Installation
 
@@ -107,9 +112,30 @@ $ vim meteo.properties
 ````
 
 ### Run tests
-Execute:
+First export SOLARMETEO_ROOT variable to point to solarmeteo root directory:
 ````shell
-$ python3 -m unittest discover -p 'Test*.py' -v  ./test
+$ export SOLARMETEO_ROOT=$(pwd)
+````
+
+Then run tests using unittest:
+````shell
+$ python -m unittest discover -p 'Test*.py' -v  ./tests
+````
+
+or with coverage:
+````shell
+$ coverage run -m unittest discover -p 'Test*.py' -v  ./tests
+$ coverage html
+````
+
+or shorter:
+````shell
+$ coverage run -m unittest discover -p 'Test*.py' -v ./tests && coverage html
+````
+
+Then check coverage report in generated htmlcov directory using your favirite browser:
+````shell
+$ firefox htmlcov/index.html
 ````
 
 ## Usage
