@@ -7,15 +7,14 @@
 import unittest
 from datetime import datetime
 
-from sqlalchemy.orm import sessionmaker
-
-from logger import logs
 from tests import StationCommon
 from tests.SolarMeteoTestConfig import SolarMeteoTestConfig
 from tests.StationCommon import create_station
-from tests.DBManager import DBManager
 from model.station_data import StationData
 
+from logging import getLogger
+
+logger = getLogger("solarupdater_tests")
 
 class TestStationData(unittest.TestCase):
 
@@ -23,15 +22,12 @@ class TestStationData(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.testconfig = SolarMeteoTestConfig()
-
-        cls.logger = logs.setup_custom_logger('updater', cls.testconfig['meteo']['loglevel'])
         cls.meteo_db_url=cls.testconfig['meteo.database']['url']
 
     @classmethod
     def setUp(cls):
         cls.session = cls.testconfig.create_session()
         cls.testconfig.init_complete_database()
-        cls.logger.disabled = False
 
     @classmethod
     def tearDown(cls):

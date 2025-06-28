@@ -12,7 +12,6 @@ from sqlalchemy.orm import sessionmaker
 from logger import logs
 from model.solar_data import SolarData
 from tests import SolarCommon
-from tests.DBManager import DBManager
 from tests.SolarMeteoTestConfig import SolarMeteoTestConfig
 
 
@@ -23,7 +22,6 @@ class TestSolarData(unittest.TestCase):
     def setUpClass(cls):
         cls.testconfig = SolarMeteoTestConfig()
 
-        cls.logger = logs.setup_custom_logger('updater', cls.testconfig['meteo']['loglevel'])
         cls.meteo_db_url=cls.testconfig['meteo.database']['url']
 
 
@@ -31,7 +29,6 @@ class TestSolarData(unittest.TestCase):
     def setUp(cls):
         cls.session = cls.testconfig.create_session()
         cls.testconfig.init_complete_database()
-        cls.logger.disabled = False
 
     @classmethod
     def tearDown(cls):

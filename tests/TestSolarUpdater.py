@@ -7,15 +7,11 @@
 import unittest
 
 from datetime import datetime
-from mockito import when, mock, unstub, eq
-from sqlalchemy.orm import sessionmaker
+from mockito import when, eq
 
 import json
 
-from logger import logs
 from meteo_updater.solar_updater import SolarUpdater
-from tests.DBManager import DBManager
-from tests import StationCommon, Config
 from tests.SolarMeteoTestConfig import SolarMeteoTestConfig
 
 IMGW_STATION_ID = 'id_stacji'
@@ -29,15 +25,12 @@ class TestSolarUpdater(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.testconfig = SolarMeteoTestConfig()
-
-        cls.logger = logs.setup_custom_logger('updater', cls.testconfig['meteo']['loglevel'])
         cls.meteo_db_url=cls.testconfig['meteo.database']['url']
 
         cls.updater = SolarUpdater(
             meteo_db_url=cls.testconfig['meteo.database']['url'],
             data_url=cls.testconfig['solar']['url'],
             updater_interval=cls.testconfig['meteo.updater']['solar_update_interval'],
-            logger=cls.testconfig,
             site_id=cls.testconfig['solar']['site_id'],
             solar_key=cls.testconfig['solar']['key'],
             lon=None,
@@ -48,7 +41,6 @@ class TestSolarUpdater(unittest.TestCase):
     def setUp(cls):
         cls.session = cls.testconfig.create_session()
         cls.testconfig.init_complete_database()
-        cls.logger.disabled = False
 
     @classmethod
     def tearDown(cls):

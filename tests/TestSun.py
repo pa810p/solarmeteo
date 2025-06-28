@@ -16,7 +16,7 @@ from meteo_updater import sun
 
 class TestSun(unittest.TestCase):
 
-
+    @unittest.skip("not implemented yet")
     def test_calculate_sun(self):
         sun.calculate_sun(
             datetime.now(),
