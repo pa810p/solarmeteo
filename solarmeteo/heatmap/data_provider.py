@@ -11,9 +11,9 @@ import numpy as np
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import sessionmaker
 
-from model.frame import FrameType, Frame
-from model.station import Station
-from model.station_data import StationData
+from solarmeteo.model.frame import FrameType, Frame
+from solarmeteo.model.station import Station
+from solarmeteo.model.station_data import StationData
 
 logger = getLogger("solarmeteo")
 
@@ -164,11 +164,21 @@ class DataProvider:
     #     return frames
 
 
-    def store_frames(self, heatmap, frames):
+    def store_frames(self, heatmap : str, frames : list):
+        """
+        Stores frames of a specific heatmap type in the database.
+
+        Args:
+            heatmap (str): The name of the heatmap or frame type.
+            frames (iterable): An iterable of (datetime, np.ndarray) tuples to store.
+
+        Each frame is compressed, encoded, and stored with its metadata.
+        """
         session = self.create_session()
 
         frame_type = session.query(FrameType).filter_by(name=heatmap).first()
         if not frame_type:
+            logger.info(f"Create new frametype: {heatmap}")
             frame_type = FrameType(name=heatmap)
             session.add(frame_type)
             session.flush()  # Generate ID for new type
@@ -186,7 +196,6 @@ class DataProvider:
 
         session.commit()
         session.close()
-
 
 
 class TemperatureProvider(DataProvider):

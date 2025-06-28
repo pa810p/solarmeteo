@@ -5,7 +5,7 @@
 ###
 from psycopg2 import IntegrityError
 
-from model.station import Station
+from solarmeteo.model.station import Station
 
 IMGW_ID = 123456
 

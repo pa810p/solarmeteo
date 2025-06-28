@@ -7,10 +7,7 @@
 import unittest
 from datetime import datetime
 
-from sqlalchemy.orm import sessionmaker
-
-from logger import logs
-from model.solar_data import SolarData
+from solarmeteo.model.solar_data import SolarData
 from tests import SolarCommon
 from tests.SolarMeteoTestConfig import SolarMeteoTestConfig
 

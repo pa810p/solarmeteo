@@ -9,10 +9,10 @@ from shapely.geometry import Point
 from shapely.prepared import prep
 
 import matplotlib.pyplot as plt
-from matplotlib.colors import Normalize, LinearSegmentedColormap, PowerNorm
+from matplotlib.colors import Normalize, LinearSegmentedColormap
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 
-from heatmap.data_provider import StationValue
+from solarmeteo.heatmap.data_provider import StationValue
 
 
 class HeatmapCreator:

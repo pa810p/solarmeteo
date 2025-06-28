@@ -10,7 +10,7 @@ from datetime import datetime
 from tests import StationCommon
 from tests.SolarMeteoTestConfig import SolarMeteoTestConfig
 from tests.StationCommon import create_station
-from model.station_data import StationData
+from solarmeteo.model.station_data import StationData
 
 from logging import getLogger
 

@@ -6,12 +6,13 @@
 
 
 import configparser
+import logging
 import optparse
 
-from heatmap.heatmap import HeatMap
-from logger import logs
-from meteo_updater.meteo_updater import MeteoUpdater
-from meteo_updater.solar_updater import SolarUpdater
+from solarmeteo.heatmap.heatmap import HeatMap
+from solarmeteo.logger.logs import get_log_level, setup_logging
+from solarmeteo.meteo_updater.meteo_updater import MeteoUpdater
+from solarmeteo.meteo_updater.solar_updater import SolarUpdater
 
 
 def main():
@@ -79,7 +80,7 @@ def main():
     parser.add_option('--progress', dest='progress', help='when generating heatmap indicates progressbar', action='store_true')
     parser.add_option('--generate-frames', dest='generate_frames', help='generate frames after meteo update', action='store_true')
     parser.add_option('--generate-cache', dest='generate_cache', help='generate cache for --last-hours station data', action='store_true')
-    parser.add_option('--overwrite', dest='overwrite', desc='cached frame will be overwritten with generated one', action='store_true')
+    parser.add_option('--overwrite', dest='overwrite', help='cached frame will be overwritten with generated one', action='store_true')
 
     # option not in properties
     # TODO: check if default can be set if empty in here
@@ -157,7 +158,9 @@ def main():
     if options.overwrite is not None and not '':
         overwrite = options.overwrite
 
-    logs.setup_custom_logger('solarmeteo', log_level)
+    setup_logging(level=get_log_level(log_level), project_prefix="solarmeteo")
+    logger = logging.getLogger("solarmeteo.*")
+    logger.info(f"Starting Solarmeteo...")
 
     # if meteo_daemonize:
     #     try:
@@ -220,6 +223,7 @@ def main():
             hm = HeatMap(meteo_db_url=meteo_db_url, last=last_hours, heatmap_type=frametype, max_workers=max_workers,
                          file_format='cache')
             hm.generate()
+
 
 
 if __name__ == '__main__':

@@ -14,7 +14,7 @@ from alembic.config import Config
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from logger import logs
+from solarmeteo.logger import logs
 
 
 class SolarMeteoTestConfig:
@@ -39,7 +39,7 @@ class SolarMeteoTestConfig:
             self.meteoconfig = configparser.ConfigParser(interpolation=configparser.ExtendedInterpolation())
             self.meteoconfig.read(self.METEO_PROPERTIES)
 
-        logs.setup_custom_logger('solarmeteo_test', self.meteoconfig['meteo']['loglevel'])
+        logs.setup_logging(logs.get_log_level(self.meteoconfig['meteo']['loglevel']))
 
 
     def create_connection(self, db_url):

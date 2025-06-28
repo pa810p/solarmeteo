@@ -4,14 +4,11 @@
 # License       : GNU GENERAL PUBLIC LICENSE v3
 ###
 
-from datetime import datetime, timedelta
-
-import astropy.time
-from astropy.coordinates import EarthLocation, AltAz, get_sun
+from datetime import datetime
 
 import unittest
 
-from meteo_updater import sun
+from solarmeteo.meteo_updater import sun
 
 
 class TestSun(unittest.TestCase):

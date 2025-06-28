@@ -7,10 +7,10 @@
 from datetime import datetime
 from logging import getLogger
 
-from meteo_updater import sun
-from model.solar_data import SolarData
-from meteo_updater.updater import Updater
-from model.sun_data import SunData
+from solarmeteo.meteo_updater import sun
+from solarmeteo.model.solar_data import SolarData
+from solarmeteo.meteo_updater.updater import Updater
+from solarmeteo.model.sun_data import SunData
 
 logger = getLogger(__name__)
 

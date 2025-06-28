@@ -7,10 +7,10 @@
 
 import time
 from datetime import datetime, timedelta
-from model.station_data import StationData, IMGW_DATE, IMGW_HOUR, IMGW_TEMPERATURE, IMGW_WIND_SPEED, \
+from solarmeteo.model.station_data import StationData, IMGW_DATE, IMGW_HOUR, IMGW_TEMPERATURE, IMGW_WIND_SPEED, \
     IMGW_WIND_DIRECTION, IMGW_HUMIDITY, IMGW_PRECIPITATION, IMGW_PRESSURE
-from model.station import Station, IMGW_STATION_ID, IMGW_STATION_NAME
-from meteo_updater.updater import Updater
+from solarmeteo.model.station import Station, IMGW_STATION_ID, IMGW_STATION_NAME
+from solarmeteo.meteo_updater.updater import Updater
 
 from logging import getLogger
 

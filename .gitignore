@@ -1,7 +1,7 @@
 # solarmeteo configuration files
 alembic.ini
 tests/resources/alembic_test.ini
-meteo.properties
+solarmeteo/meteo.properties
 tests/resources/meteo_test.properties
 db/init.sql
 Dockerfile

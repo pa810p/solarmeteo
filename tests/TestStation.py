@@ -8,11 +8,10 @@ import unittest
 
 import sqlalchemy
 
-from logger import logs
 from tests import StationCommon
 from tests.SolarMeteoTestConfig import SolarMeteoTestConfig
 from tests.StationCommon import create_station
-from model.station import Station
+from solarmeteo.model.station import Station
 
 
 class TestStation(unittest.TestCase):

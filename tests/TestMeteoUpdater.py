@@ -8,9 +8,9 @@
 import unittest
 import json
 
-from tests import StationCommon, Config
+from tests import StationCommon
 
-from meteo_updater.meteo_updater import MeteoUpdater
+from solarmeteo.meteo_updater.meteo_updater import MeteoUpdater
 
 from tests.SolarMeteoTestConfig import SolarMeteoTestConfig
 
