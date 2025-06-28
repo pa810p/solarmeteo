@@ -12,12 +12,12 @@ from model.solar_data import SolarData
 from meteo_updater.updater import Updater
 from model.sun_data import SunData
 
-logger = getLogger("updater")
+logger = getLogger(__name__)
 
 
 class SolarUpdater(Updater):
-    def __init__(self, meteo_db_url, data_url, updater_interval, site_id, solar_key, lon, lat, height, logger):
-        super(SolarUpdater, self).__init__(meteo_db_url, updater_interval, logger)
+    def __init__(self, meteo_db_url, data_url, updater_interval, site_id, solar_key, lon, lat, height):
+        super(SolarUpdater, self).__init__(meteo_db_url, updater_interval)
         self.site_id = site_id
         self.data_url = data_url
         self.solar_key = solar_key

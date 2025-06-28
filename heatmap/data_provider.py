@@ -4,6 +4,8 @@ from dataclasses import dataclass
 from operator import and_
 from collections import defaultdict
 
+from logging import getLogger
+
 import numpy as np
 
 from sqlalchemy import create_engine, select
@@ -13,6 +15,7 @@ from model.frame import FrameType, Frame
 from model.station import Station
 from model.station_data import StationData
 
+logger = getLogger("solarmeteo")
 
 @dataclass
 class StationValue:
@@ -62,7 +65,17 @@ class DataProvider:
         return latest_datetimes
 
 
-    def provide_stations_by_datetimes(self, column, datetimes):
+    def provide_stations_by_datetimes(self, column : str, datetimes : list) -> list:
+        """
+        Provides station data for the specified column and datetimes.
+
+        Args:
+            column (str): The name of the data column to retrieve from StationData.
+            datetimes (list): List of datetime objects to filter the data.
+
+        Returns:
+            list: Sorted list of tuples (datetime, [StationValue, ...]) in descending datetime order.
+        """
 
         session = self.create_session()
 
@@ -109,24 +122,38 @@ class DataProvider:
         return self.provide_stations_by_datetimes(column, latest_datetimes)
 
 
-    def provide_frames_by_type_and_datetimes(self, heatmap, target_datetimes):
+    def provide_frames_by_type_and_datetimes(self, heatmap : str, datetimes : list ) -> dict:
+        """
+        Retrieves frames of a specific type (heatmap) for the given datetimes.
+
+        Args:
+            heatmap (str): The name of the heatmap or frame type to retrieve.
+            datetimes (list): List of datetime objects to filter the frames.
+
+        Returns:
+            dict: A dictionary mapping datetime to the corresponding numpy array frame
+        """
+        logger.debug(f"Providing frames for: {datetimes}")
+        if datetimes is None or len(datetimes) < 1:
+            logger.error('Datetimes should be an array of at least one element. No frames will be provided')
+            return None
+
         session = self.create_session()
         result = ((session.query(Frame.datetime, Frame.body, Frame.dtype, Frame.shape)
-                .join(FrameType))
-                .filter(
-                FrameType.name == heatmap,
-                        Frame.datetime.in_(target_datetimes)
-            )).all()
+                   .join(FrameType))
+        .filter(
+            FrameType.name == heatmap,
+            Frame.datetime.in_(datetimes)
+        )).all()
 
         session.close()
 
         frames = {}
         for (datetime, body, dtype, shape) in result:
             frames [datetime] = np.frombuffer(
-                    zlib.decompress(base64.b64decode(body)),
-                    dtype=np.dtype(dtype)
-                ).reshape(tuple(int(x) for x in shape.split(',')))
-
+                zlib.decompress(base64.b64decode(body)),
+                dtype=np.dtype(dtype)
+            ).reshape(tuple(int(x) for x in shape.split(',')))
 
         return frames
 

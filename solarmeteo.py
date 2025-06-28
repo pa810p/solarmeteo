@@ -157,8 +157,7 @@ def main():
     if options.overwrite is not None and not '':
         overwrite = options.overwrite
 
-    logger = logs.setup_custom_logger('updater', log_level)
-    heatlog = logs.setup_custom_logger('heatmap', log_level)
+    logs.setup_custom_logger('solarmeteo', log_level)
 
     # if meteo_daemonize:
     #     try:
@@ -184,8 +183,7 @@ def main():
             meteo_data_url=imgw_data_url,
             updater_interval=imgw_update_interval,
             updater_update_station_coordinates=updater_update_station_coordinates,
-            updater_update_station_coordinates_file=updater_update_station_coordinates_file,
-            logger=logger)
+            updater_update_station_coordinates_file=updater_update_station_coordinates_file)
         imgw_updater.update()
 
         if generate_frames:
@@ -202,8 +200,7 @@ def main():
             solar_key=solar_key,
             lon=lon,
             lat=lat,
-            height=height,
-            logger=logger)
+            height=height)
 
         if solar_update_period is not None:
             solar_updater.update_datetime_period(solar_update_period)

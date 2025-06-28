@@ -11,15 +11,13 @@ import sys
 _logger_lock = threading.Lock()
 
 def setup_custom_logger(name, log_level):
-    with _logger_lock:
-        logger = logging.getLogger(name)
-        if not getattr(logger, '_custom_handler_set', False):
-            formatter = logging.Formatter(fmt='%(asctime)s - %(levelname)s - %(module)s - %(message)s')
-            handler = logging.handlers.RotatingFileHandler(name + '.log', encoding='utf-8', maxBytes=10**6, backupCount=5)
-            handler.setFormatter(formatter)
-            logger.addHandler(handler)
-            # logger.addHandler(logging.StreamHandler(sys.stdout))
-            logger._custom_handler_set = True
-        logger.setLevel(logging.getLevelName(log_level))
-        return logger
+    logging.basicConfig(
+        level=logging.getLevelName(log_level),  # Default level (override per-module later)
+        format='%(asctime)s - %(levelname)s - %(module)s - %(message)s',
+        handlers=[
+            logging.handlers.RotatingFileHandler(name + '.log', encoding='utf-8', maxBytes=10**6, backupCount=5),
+            logging.StreamHandler(sys.stdout)  # Optional: also print to console
+        ]
+    )
+
 

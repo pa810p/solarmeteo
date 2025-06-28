@@ -16,15 +16,15 @@ from logging import getLogger
 
 import sqlalchemy.exc
 
-logger = getLogger("updater")
+logger = getLogger(__name__)
 
 class MeteoUpdater (Updater):
     """
     Downloads IMGW station data and stores it into a configured SQL database for further analyzes
     """
     def __init__(self, meteo_db_url, meteo_data_url, updater_interval, updater_update_station_coordinates,
-                 updater_update_station_coordinates_file, logger):
-        super(MeteoUpdater, self).__init__(meteo_db_url, updater_interval, logger)
+                 updater_update_station_coordinates_file):
+        super(MeteoUpdater, self).__init__(meteo_db_url, updater_interval)
 
         self.meteo_data_url = meteo_data_url
         self.updater_update_station_coordinates = updater_update_station_coordinates
@@ -136,7 +136,7 @@ class MeteoUpdater (Updater):
             logger.debug('Will update station coordinates')
             (lon, lat) = self.find_station_coordinates(station.imgw_id, coordinates)
             if lon is not None and lat is not None:
-                self.logger.debug('Update coordinates.')
+                logger.debug('Update coordinates.')
                 station.longitude = lon
                 station.latitude = lat
                 session.commit()

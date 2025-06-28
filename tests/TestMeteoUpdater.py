@@ -8,13 +8,10 @@
 import unittest
 import json
 
-from tests.DBManager import DBManager
 from tests import StationCommon, Config
-from sqlalchemy.orm import sessionmaker
 
 from meteo_updater.meteo_updater import MeteoUpdater
 
-from logger import logs
 from tests.SolarMeteoTestConfig import SolarMeteoTestConfig
 
 IMGW_STATION_ID = 'id_stacji'
@@ -31,7 +28,6 @@ class TestMeteoUpdater(unittest.TestCase):
     def setUpClass(cls):
         cls.testconfig = SolarMeteoTestConfig()
 
-        cls.logger = logs.setup_custom_logger('updater', cls.testconfig['meteo']['loglevel'])
         cls.meteo_db_url=cls.testconfig['meteo.database']['url']
 
         cls.updater = MeteoUpdater(
@@ -39,19 +35,16 @@ class TestMeteoUpdater(unittest.TestCase):
             meteo_data_url=cls.testconfig['imgw']['url'],
             updater_interval=cls.testconfig['meteo.updater']['imgw_update_interval'],
             updater_update_station_coordinates=True if cls.testconfig['imgw']['update_station_coordinates'] == 'yes' else False,
-            updater_update_station_coordinates_file=cls.testconfig['imgw']['update_station_coordinates_file'],
-            logger=cls.logger)
+            updater_update_station_coordinates_file=cls.testconfig['imgw']['update_station_coordinates_file'],)
 
     @classmethod
     def setUp(cls):
         cls.session = cls.testconfig.create_session()
         cls.testconfig.init_complete_database()
-        cls.logger.disabled = False
 
     @classmethod
     def tearDown(cls):
         cls.session.close()
-        updater = None
 
     def test_find_station_by_imgw_id(self):
         StationCommon.remove_all_stations(self.session)
