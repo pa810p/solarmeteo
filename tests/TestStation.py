@@ -7,35 +7,31 @@
 import unittest
 
 import sqlalchemy
-from sqlalchemy.orm import sessionmaker
 
-from test import StationCommon
-from test.DBManager import DBManager
-from test.StationCommon import create_station
-from model.station import Station
+from tests import StationCommon
+from tests.SolarMeteoTestConfig import SolarMeteoTestConfig
+from tests.StationCommon import create_station
+from solarmeteo.model.station import Station
 
 
 class TestStation(unittest.TestCase):
 
-    dbManager = DBManager()
 
     @classmethod
     def setUpClass(cls):
-        cls.dbManager.init_complete_database()
-        cls.connection = cls.dbManager.connect()
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.dbManager.remove_complete_database()
-        cls.dbManager.disconnect()
+        cls.testconfig = SolarMeteoTestConfig()
+        cls.meteo_db_url=cls.testconfig['meteo.database']['url']
 
     @classmethod
     def setUp(cls):
-        cls.session = sessionmaker(bind=cls.connection)()
+        cls.session = cls.testconfig.create_session()
+        cls.testconfig.init_complete_database()
 
     @classmethod
     def tearDown(cls):
         cls.session.close()
+        updater = None
+
 
     def test_CreateStation(self):
 

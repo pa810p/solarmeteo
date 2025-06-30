@@ -4,7 +4,7 @@
 # License       : GNU GENERAL PUBLIC LICENSE v3
 ###
 
-from model.solar_data import SolarData
+from solarmeteo.model.solar_data import SolarData
 
 
 def remove_all_solar_data(session):

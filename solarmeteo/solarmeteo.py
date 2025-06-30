@@ -6,12 +6,13 @@
 
 
 import configparser
+import logging
 import optparse
 
-from heatmap.heatmap import HeatMap
-from logger import logs
-from meteo_updater.meteo_updater import MeteoUpdater
-from meteo_updater.solar_updater import SolarUpdater
+from solarmeteo.heatmap.heatmap import HeatMap
+from solarmeteo.logger.logs import get_log_level, setup_logging
+from solarmeteo.meteo_updater.meteo_updater import MeteoUpdater
+from solarmeteo.meteo_updater.solar_updater import SolarUpdater
 
 
 def main():
@@ -41,7 +42,12 @@ def main():
     heatmap = None
     output_file = None
     max_workers = 16
-    last_days = 1
+    last_hours = 1
+    keep_frames = 72
+    generate_frames = False
+    generate_cache = False
+    persist = False
+    usedb = False
 
     # and now overwrite them with command line if exists
     parser = optparse.OptionParser(usage="%prog [-b] [-m] [-i] [-f] [-l] [-o]", version=ver, description=desc)
@@ -68,11 +74,16 @@ def main():
     parser.add_option('--solar_update_interval', dest='solar_update_interval', help='solar update interval')
     parser.add_option('--solar-period', dest='solar_update_period', help='solar update from_date:to_date')
     parser.add_option('--heatmap', dest='heatmap', help='generate map of: temperature, precipitation, humidity, pressure, windspeed')
-    parser.add_option('--last-days', dest='last_days', help='generate animated map from last n days', type=int, default=1)
-    parser.add_option('--file-format', dest='file_format', help='file format for heatmap: png, gif (animated), default is png', default='png')
+    parser.add_option('--last-hours', dest='last_hours', help='generate animated map from last n hours', type=int, default=1)
+    parser.add_option('--format', dest='file_format', help='file format for heatmap: png, gif (animated), default is png', default='png')
     parser.add_option('-o', '--output', dest='output_file', help='output file for heatmap, default is [heatmap].[png|gif]')
     parser.add_option('--max-workers', dest='max_workers', help='workers used in parallel when generating animations', type=int, default=16)
     parser.add_option('--progress', dest='progress', help='when generating heatmap indicates progressbar', action='store_true')
+    parser.add_option('--generate-frames', dest='generate_frames', help='generate frames after meteo update', action='store_true')
+    parser.add_option('--generate-cache', dest='generate_cache', help='generate cache for --last-hours station data', action='store_true')
+    parser.add_option('--overwrite', dest='overwrite', help='cached frame will be overwritten with generated one', action='store_true')
+    parser.add_option('--persist', dest='persist', help='persist frames in database', action='store_true')
+    parser.add_option('--usedb', dest='usedb', help='use database persisted frames if available', action='store_true')
 
     # option not in properties
     # TODO: check if default can be set if empty in here
@@ -129,8 +140,8 @@ def main():
     if options.heatmap is not None and not '' and len(options.heatmap) != 0:
         heatmap = options.heatmap
 
-    if options.last_days is not None and not '':
-        last_days = options.last_days
+    if options.last_hours is not None and not '':
+        last_hours = options.last_hours
 
     if options.file_format is not None and not '' and len(options.file_format) != 0:
         file_format = options.file_format
@@ -141,8 +152,25 @@ def main():
     if options.max_workers is not None and not '':
         max_workers = options.max_workers
 
-    logger = logs.setup_custom_logger('updater', log_level)
-    heatlog = logs.setup_custom_logger('heatmap', log_level)
+    if options.generate_frames is not None and not '':
+        generate_frames = options.generate_frames
+
+    if options.generate_cache is not None and not '':
+        generate_cache = options.generate_cache
+
+    if options.overwrite is not None and not '':
+        overwrite = options.overwrite
+
+    if options.persist is not None and not '':
+        persist = options.persist
+
+    if options.usedb is not None and not '':
+        usedb = options.usedb
+
+
+    setup_logging(level=get_log_level(log_level), project_prefix="solarmeteo")
+    logger = logging.getLogger("solarmeteo.*")
+    logger.info(f"Starting Solarmeteo...")
 
     # if meteo_daemonize:
     #     try:
@@ -168,9 +196,13 @@ def main():
             meteo_data_url=imgw_data_url,
             updater_interval=imgw_update_interval,
             updater_update_station_coordinates=updater_update_station_coordinates,
-            updater_update_station_coordinates_file=updater_update_station_coordinates_file,
-            logger=logger)
+            updater_update_station_coordinates_file=updater_update_station_coordinates_file)
         imgw_updater.update()
+
+        if generate_frames:
+            for frametype in HeatMap.heatmaps:
+                hm = HeatMap(meteo_db_url=meteo_db_url, last=1, heatmap_type=frametype, max_workers=max_workers)
+                hm.persist_frame()
 
     if update == 'both' or update == 'solar':
         solar_updater = SolarUpdater(
@@ -181,8 +213,7 @@ def main():
             solar_key=solar_key,
             lon=lon,
             lat=lat,
-            height=height,
-            logger=logger)
+            height=height)
 
         if solar_update_period is not None:
             solar_updater.update_datetime_period(solar_update_period)
@@ -193,9 +224,16 @@ def main():
         if output_file is None:
             output_file = heatmap
 
-        hm = HeatMap(meteo_db_url=meteo_db_url, last=last_days*1, file_format=file_format,
-                     output_file=output_file, heatmap_type=heatmap, max_workers=max_workers)
+        hm = HeatMap(meteo_db_url=meteo_db_url, last=last_hours, file_format=file_format,
+                     output_file=output_file, heatmap_type=heatmap, max_workers=max_workers,
+                     persist=persist, usedb=usedb)
         hm.generate()
+
+    if generate_cache:
+        for frametype in HeatMap.heatmaps:
+            hm = HeatMap(meteo_db_url=meteo_db_url, last=last_hours, heatmap_type=frametype, max_workers=max_workers,
+                         file_format='cache')
+            hm.generate()
 
 
 if __name__ == '__main__':
@@ -203,3 +241,5 @@ if __name__ == '__main__':
     ver = "%prog 2.0 (c) 2019-2025 Pawel Prokop"
 
     main()
+
+

@@ -7,15 +7,12 @@
 import unittest
 
 from datetime import datetime
-from mockito import when, mock, unstub, eq
-from sqlalchemy.orm import sessionmaker
+from mockito import when, eq
 
 import json
 
-from logger import logs
-from meteo_updater.solar_updater import SolarUpdater
-from test.DBManager import DBManager
-from test import StationCommon, Config
+from solarmeteo.meteo_updater.solar_updater import SolarUpdater
+from tests.SolarMeteoTestConfig import SolarMeteoTestConfig
 
 IMGW_STATION_ID = 'id_stacji'
 
@@ -24,42 +21,31 @@ STATION1_FILE = 'test/data/station1.json'
 
 class TestSolarUpdater(unittest.TestCase):
 
-    dbManager = DBManager()
-
-    updater = None
 
     @classmethod
     def setUpClass(cls):
-        cls.dbManager.init_complete_database()
-        cls.connection = cls.dbManager.connect()
-
-        config = Config.read_config()
-
-        logger = logs.setup_custom_logger('updater', config['meteo']['loglevel'])
+        cls.testconfig = SolarMeteoTestConfig()
+        cls.meteo_db_url=cls.testconfig['meteo.database']['url']
 
         cls.updater = SolarUpdater(
-            meteo_db_url=config['meteo.database']['url'],
-            data_url=config['solar']['url'],
-            updater_interval=config['meteo.updater']['solar_update_interval'],
-            logger=logger,
-            site_id=config['solar']['site_id'],
-            solar_key=config['solar']['key'],
+            meteo_db_url=cls.testconfig['meteo.database']['url'],
+            data_url=cls.testconfig['solar']['url'],
+            updater_interval=cls.testconfig['meteo.updater']['solar_update_interval'],
+            site_id=cls.testconfig['solar']['site_id'],
+            solar_key=cls.testconfig['solar']['key'],
             lon=None,
             lat=None,
             height=None)
 
     @classmethod
-    def tearDownClass(cls):
-        cls.dbManager.remove_complete_database()
-        cls.dbManager.disconnect()
-
-    @classmethod
     def setUp(cls):
-        cls.session = sessionmaker(bind=cls.connection)()
+        cls.session = cls.testconfig.create_session()
+        cls.testconfig.init_complete_database()
 
     @classmethod
     def tearDown(cls):
         cls.session.close()
+
 
     @staticmethod
     def load_energy_data(json_file):
@@ -67,7 +53,7 @@ class TestSolarUpdater(unittest.TestCase):
             return json.load(json_data)
 
     def test_update_datetime_period_valid(self):
-        json_period_data = self.load_energy_data('data/energy2019-06_quoter.json')
+        json_period_data = self.load_energy_data(self.testconfig.SOLARMETEO_ROOT + '/tests/resources/energy2019-06_quoter.json')
 
         when(self.updater).download_datetime_period(eq(datetime.strptime('1979-01-09', '%Y-%m-%d')),
                                                     eq(datetime.strptime('1989-01-09','%Y-%m-%d')))\
@@ -97,7 +83,7 @@ class TestSolarUpdater(unittest.TestCase):
         self.assertTrue('does not match format' in str(context.exception))
 
     def test_update_from_file(self):
-        file_name = 'data/energy2019-06_quorter.json'
+        file_name = self.testconfig.SOLARMETEO_ROOT + '/tests/resources/energy2019-06_quorter.json'
         self.updater.update_from_file(file_name)
 
     @classmethod

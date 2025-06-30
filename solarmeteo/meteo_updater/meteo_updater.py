@@ -7,24 +7,24 @@
 
 import time
 from datetime import datetime, timedelta
-from model.station_data import StationData, IMGW_DATE, IMGW_HOUR, IMGW_TEMPERATURE, IMGW_WIND_SPEED, \
+from solarmeteo.model.station_data import StationData, IMGW_DATE, IMGW_HOUR, IMGW_TEMPERATURE, IMGW_WIND_SPEED, \
     IMGW_WIND_DIRECTION, IMGW_HUMIDITY, IMGW_PRECIPITATION, IMGW_PRESSURE
-from model.station import Station, IMGW_STATION_ID, IMGW_STATION_NAME
-from meteo_updater.updater import Updater
+from solarmeteo.model.station import Station, IMGW_STATION_ID, IMGW_STATION_NAME
+from solarmeteo.meteo_updater.updater import Updater
 
 from logging import getLogger
 
 import sqlalchemy.exc
 
-logger = getLogger("updater")
+logger = getLogger(__name__)
 
 class MeteoUpdater (Updater):
     """
     Downloads IMGW station data and stores it into a configured SQL database for further analyzes
     """
     def __init__(self, meteo_db_url, meteo_data_url, updater_interval, updater_update_station_coordinates,
-                 updater_update_station_coordinates_file, logger):
-        super(MeteoUpdater, self).__init__(meteo_db_url, updater_interval, logger)
+                 updater_update_station_coordinates_file):
+        super(MeteoUpdater, self).__init__(meteo_db_url, updater_interval)
 
         self.meteo_data_url = meteo_data_url
         self.updater_update_station_coordinates = updater_update_station_coordinates
@@ -54,6 +54,8 @@ class MeteoUpdater (Updater):
         Stores new station to database.
         :param session database session
         :param station_json station information as json object
+        :deprecated: this method is deprecated, functionality to be removed
+        :return: Station object
         """
         station = Station(name=station_json[IMGW_STATION_NAME],
                                   imgw_id=int(station_json[IMGW_STATION_ID])
@@ -117,9 +119,9 @@ class MeteoUpdater (Updater):
 
     def update_station(self, session, station, station_json, coordinates):
         """
-        Rpdates station (if it's not recognized in the system) and station data
+        Updates station (if it's not recognized in the system) and station data
         :param session database session
-        :param station station obcject
+        :param station station object
         :param station_json whole station_data object that contains station data and conditions
         :param coordinates station coordinates that have been read from external configuration file
         """
@@ -134,7 +136,7 @@ class MeteoUpdater (Updater):
             logger.debug('Will update station coordinates')
             (lon, lat) = self.find_station_coordinates(station.imgw_id, coordinates)
             if lon is not None and lat is not None:
-                self.logger.debug('Update coordinates.')
+                logger.debug('Update coordinates.')
                 station.longitude = lon
                 station.latitude = lat
                 session.commit()

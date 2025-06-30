@@ -7,34 +7,30 @@
 import unittest
 from datetime import datetime
 
-from sqlalchemy.orm import sessionmaker
-
-from model.solar_data import SolarData
-from test import SolarCommon
-from test.DBManager import DBManager
+from solarmeteo.model.solar_data import SolarData
+from tests import SolarCommon
+from tests.SolarMeteoTestConfig import SolarMeteoTestConfig
 
 
 class TestSolarData(unittest.TestCase):
 
-    dbManager = DBManager()
 
     @classmethod
     def setUpClass(cls):
-        cls.dbManager.init_complete_database()
-        cls.connection = cls.dbManager.connect()
+        cls.testconfig = SolarMeteoTestConfig()
 
-    @classmethod
-    def tearDownClass(cls):
-        cls.dbManager.remove_complete_database()
-        cls.dbManager.disconnect()
+        cls.meteo_db_url=cls.testconfig['meteo.database']['url']
+
 
     @classmethod
     def setUp(cls):
-        cls.session = sessionmaker(bind=cls.connection)()
+        cls.session = cls.testconfig.create_session()
+        cls.testconfig.init_complete_database()
 
     @classmethod
     def tearDown(cls):
         cls.session.close()
+
 
     def test_createSolarData(self):
         SolarCommon.remove_all_solar_data(self.session)
