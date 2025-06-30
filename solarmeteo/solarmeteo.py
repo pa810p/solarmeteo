@@ -42,11 +42,12 @@ def main():
     heatmap = None
     output_file = None
     max_workers = 16
-    last_days = 1
+    last_hours = 1
     keep_frames = 72
     generate_frames = False
     generate_cache = False
-
+    persist = False
+    usedb = False
 
     # and now overwrite them with command line if exists
     parser = optparse.OptionParser(usage="%prog [-b] [-m] [-i] [-f] [-l] [-o]", version=ver, description=desc)
@@ -81,6 +82,8 @@ def main():
     parser.add_option('--generate-frames', dest='generate_frames', help='generate frames after meteo update', action='store_true')
     parser.add_option('--generate-cache', dest='generate_cache', help='generate cache for --last-hours station data', action='store_true')
     parser.add_option('--overwrite', dest='overwrite', help='cached frame will be overwritten with generated one', action='store_true')
+    parser.add_option('--persist', dest='persist', help='persist frames in database', action='store_true')
+    parser.add_option('--usedb', dest='usedb', help='use database persisted frames if available', action='store_true')
 
     # option not in properties
     # TODO: check if default can be set if empty in here
@@ -158,6 +161,13 @@ def main():
     if options.overwrite is not None and not '':
         overwrite = options.overwrite
 
+    if options.persist is not None and not '':
+        persist = options.persist
+
+    if options.usedb is not None and not '':
+        usedb = options.usedb
+
+
     setup_logging(level=get_log_level(log_level), project_prefix="solarmeteo")
     logger = logging.getLogger("solarmeteo.*")
     logger.info(f"Starting Solarmeteo...")
@@ -215,7 +225,8 @@ def main():
             output_file = heatmap
 
         hm = HeatMap(meteo_db_url=meteo_db_url, last=last_hours, file_format=file_format,
-                     output_file=output_file, heatmap_type=heatmap, max_workers=max_workers)
+                     output_file=output_file, heatmap_type=heatmap, max_workers=max_workers,
+                     persist=persist, usedb=usedb)
         hm.generate()
 
     if generate_cache:
@@ -223,7 +234,6 @@ def main():
             hm = HeatMap(meteo_db_url=meteo_db_url, last=last_hours, heatmap_type=frametype, max_workers=max_workers,
                          file_format='cache')
             hm.generate()
-
 
 
 if __name__ == '__main__':

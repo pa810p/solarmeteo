@@ -101,12 +101,12 @@ class HeatMap:
                 + f"overwrite: {overwrite}, usedb: {usedb}, persist: {persist}")
 
 
-    def _generate_frames_by_datetimes(self, datetimes, persist=None ):
+    def _generate_frames_by_datetimes(self, date_times, persist=None ) -> dict:
         """
-        Generates heatmap frames for the given list of datetimes.
+        Generates heatmap frames for the given list of date_times.
 
         Args:
-            datetimes (list): List of datetime objects.
+            date_times (list): List of date_time objects.
             persist (bool, optional): Whether to persist the frames.
 
         Returns:
@@ -115,8 +115,9 @@ class HeatMap:
         if persist is None:
             persist = self.persist
 
-        frames = []
-        stations = self.dataprovider.provide_stations_by_datetimes(self.heatmap_type, datetimes)
+        logger.debug("Generate frames")
+        frames = dict()
+        stations = self.dataprovider.provide_stations_by_datetimes(self.heatmap_type, date_times)
 
         with ProcessPoolExecutor(max_workers=self.max_workers) as executor:
             futures = [
@@ -125,7 +126,8 @@ class HeatMap:
             ]
 
             for future in as_completed(futures):
-                frames.append(future.result())
+                (datetime, frame) = future.result()
+                frames [datetime] = frame
 
         if persist:
             self.dataprovider.store_frames(self.heatmap_type, frames)
@@ -156,9 +158,10 @@ class HeatMap:
         last_datetimes =  self.dataprovider.get_last_datetimes(last=self.last)
         frames = self._generate_frames_by_datetimes(last_datetimes)
 
-        sorted_frames = [image for datetime, image in sorted(frames, key=lambda x: x[0])]
+        # sorted_frames = [image for datetime, image in sorted(frames, key=lambda x: x[0])]
+        sorted_frames = dict(sorted(frames.items()))
 
-        imageio.mimsave(f"{self.output_file}", sorted_frames, duration=200, palettesize=256, subrectangles=True)
+        imageio.mimsave(f"{self.output_file}", list(sorted_frames.values()), duration=200, palettesize=256, subrectangles=True)
         # imageio.mimsave("animation.mp4", sorted_frames, format="mp4", duration=0.2)  # Save as MP4# Duration per frame (sec)
         logger.debug(f"{self.heatmap_type.capitalize()} heatmap generation completed at {datetime.now()}")
 
@@ -176,7 +179,7 @@ class HeatMap:
         last_datetimes = self.dataprovider.get_last_datetimes(1)
         frames = self._generate_frames_by_datetimes(last_datetimes)
 
-        imageio.imwrite(f"{self.output_file}", frames[0][1])
+        imageio.imwrite(f"{self.output_file}", next(iter(frames.values())))
         logger.debug(f"{self.heatmap_type.capitalize()} heatmap generation completed at {datetime.now()}")
 
 
@@ -207,12 +210,24 @@ class HeatMap:
         Returns:
             None
         """
-        last_datetimes = self.dataprovider.get_last_datetimes(self.last)
-        frames = self._generate_frames_by_datetimes(last_datetimes)
+        logger.debug("Generate webp")
+        last_date_times = self.dataprovider.get_last_datetimes(self.last)
 
-        sorted_frames = [image for datetime, image in sorted(frames, key=lambda x: x[0])]
+        cached_frames = dict()
+        if self.usedb:
+            cached_frames = self.dataprovider.provide_frames_by_type_and_datetimes(heatmap=self.heatmap_type, datetimes=last_date_times)
 
-        pil_frames = [Image.fromarray(frame) for frame in sorted_frames]
+        map_keys = set(cached_frames.keys())
+        list_set = set(last_date_times)
+        missing = list(list_set - map_keys)
+
+        generated_frames = self._generate_frames_by_datetimes(missing)
+
+        frames = cached_frames | generated_frames
+
+        sorted_frames = dict(sorted(frames.items()))
+
+        pil_frames = [Image.fromarray(frame) for frame in list(sorted_frames.values())]
         pil_frames[0].save(
             f"{self.output_file}",
             save_all=True,

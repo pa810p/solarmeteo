@@ -127,13 +127,14 @@ $ python -m unittest discover -p 'Test*.py' -v  ./tests
 
 or with coverage:
 ````shell
-$ coverage run -m unittest discover -p 'Test*.py' -v  ./tests
+$ coverage run --parallel-mode --concurrency=multiprocessing -m unittest discover -p 'Test*.py' -v  ./tests
+$ coverage combine
 $ coverage html
 ````
 
 or shorter:
 ````shell
-$ coverage run -m unittest discover -p 'Test*.py' -v ./tests && coverage html
+$ coverage run --parallel-mode --concurrency=multiprocessing -m unittest discover -p 'Test*.py' -v ./tests && coverage combine && coverage html
 ````
 
 Then check coverage report in generated htmlcov directory using your favirite browser:
@@ -148,13 +149,19 @@ $ crontab -e
 ````
 and add following lines to it:
 ````shell
-20 * * * * cd ~/solarmeteo; python3 solarmeteo.py -u imgw   >/dev/null 2>&1
-*/15 * * * * cd ~/solarmeteo; python3 solarmeteo.py -u solar   >/dev/null 2>&1
+20 * * * * cd ~/solarmeteo; python3 -m solarmeteo.solarmeteo -u imgw   >/dev/null 2>&1
+*/15 * * * * cd ~/solarmeteo; python3 -m solarmeteo.solarmeteo -u solar   >/dev/null 2>&1
 ````
 :bulb: assumed that solarmeteo folder is in $HOME directory.
 Above crontab configuration means that external services will be called:
 - meteo: every full hour plus 20 minutes
 - solar: every 15 minutes
+
+### Example usages:
+Generate WebP animation from latest 48 hours.
+```shell
+python3 -m solarmeteo.solarmeteo --last=48 --format=webp --heatmap=temperature --output=temperature.webp --persist
+```
 
 ## Reports
 

@@ -133,7 +133,6 @@ class DataProvider:
         Returns:
             dict: A dictionary mapping datetime to the corresponding numpy array frame
         """
-        logger.debug(f"Providing frames for: {datetimes}")
         if datetimes is None or len(datetimes) < 1:
             logger.error('Datetimes should be an array of at least one element. No frames will be provided')
             return None
@@ -148,13 +147,14 @@ class DataProvider:
 
         session.close()
 
-        frames = {}
+        frames = dict()
         for (datetime, body, dtype, shape) in result:
             frames [datetime] = np.frombuffer(
                 zlib.decompress(base64.b64decode(body)),
                 dtype=np.dtype(dtype)
             ).reshape(tuple(int(x) for x in shape.split(',')))
 
+        logger.debug(f"Providing stored frames for: {frames.keys()}")
         return frames
 
 
@@ -164,7 +164,7 @@ class DataProvider:
     #     return frames
 
 
-    def store_frames(self, heatmap : str, frames : list):
+    def store_frames(self, heatmap : str, frames : dict):
         """
         Stores frames of a specific heatmap type in the database.
 
@@ -174,6 +174,7 @@ class DataProvider:
 
         Each frame is compressed, encoded, and stored with its metadata.
         """
+        logger.debug("Store frames on database")
         session = self.create_session()
 
         frame_type = session.query(FrameType).filter_by(name=heatmap).first()
@@ -183,11 +184,12 @@ class DataProvider:
             session.add(frame_type)
             session.flush()  # Generate ID for new type
 
-        for (datetime, frame) in frames:
+        for key in frames:
+            frame = frames[key]
             assert isinstance(frame, np.ndarray)
             new_frame = Frame(
                 type_id=frame_type.id,
-                datetime=datetime,
+                datetime=key,
                 body=base64.b64encode(zlib.compress(frame.tobytes())).decode('utf-8'),
                 dtype=str(frame.dtype),
                 shape=','.join(map(str, frame.shape))
