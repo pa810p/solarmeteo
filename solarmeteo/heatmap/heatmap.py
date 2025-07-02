@@ -69,7 +69,7 @@ class HeatMap:
                       'Olsztyn', 'Lublin', 'Rzeszów', 'Zielona Góra', 'Białystok']
 
 
-    def __init__(self, meteo_db_url, last=1, file_format='png', output_file='temperature.png', heatmap_type='temperature', max_workers=16,
+    def __init__(self, meteo_db_url, last=1, file_format='png', output_file='temperature.png', heatmap_type='temperature', max_workers=2,
                  overwrite=True, usedb=False, persist=False):
         """
         Initialize the HeatMap object with configuration for data source, output, and processing.

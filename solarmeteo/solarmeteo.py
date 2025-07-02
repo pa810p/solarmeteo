@@ -41,7 +41,7 @@ def main():
     update = config['meteo.updater']['modules']
     heatmap = None
     output_file = None
-    max_workers = 16
+    max_workers = 2
     last_hours = 1
     keep_frames = 72
     generate_frames = False
@@ -77,7 +77,7 @@ def main():
     parser.add_option('--last-hours', dest='last_hours', help='generate animated map from last n hours', type=int, default=1)
     parser.add_option('--format', dest='file_format', help='file format for heatmap: png, gif (animated), default is png', default='png')
     parser.add_option('-o', '--output', dest='output_file', help='output file for heatmap, default is [heatmap].[png|gif]')
-    parser.add_option('--max-workers', dest='max_workers', help='workers used in parallel when generating animations', type=int, default=16)
+    parser.add_option('--max-workers', dest='max_workers', help='workers used in parallel when generating animations', type=int, default=2)
     parser.add_option('--progress', dest='progress', help='when generating heatmap indicates progressbar', action='store_true')
     parser.add_option('--generate-frames', dest='generate_frames', help='generate frames after meteo update', action='store_true')
     parser.add_option('--generate-cache', dest='generate_cache', help='generate cache for --last-hours station data', action='store_true')

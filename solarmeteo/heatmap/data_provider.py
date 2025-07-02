@@ -262,5 +262,5 @@ class WindProvider(DataProvider):
         return super().provide_stations_by_datetimes(column="wind_speed", datetimes=datetimes)
 
     def provide_frames_by_type_and_datetimes(self, datetimes = None):
-        return super().provide_frames_by_type_and_datetimes(heatmap = "wind_speed", datetimes=datetimes)
+        return super().provide_frames_by_type_and_datetimes(heatmap = "wind", datetimes=datetimes)
 
