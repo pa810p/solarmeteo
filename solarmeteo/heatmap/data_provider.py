@@ -206,11 +206,11 @@ class TemperatureProvider(DataProvider):
         super().__init__(meteo_db_url, last)
 
 
-    def provide(self, column="temperature"):
-        return super().provide(column)
+    def provide_stations_by_datetimes(self, datetimes=None):
+        return super().provide_stations_by_datetimes(column="temperature", datetimes=datetimes)
 
-    def provide_frames_by_type_and_datetimes(self, heatmap="temperature", datetimes = None):
-        return super().provide_frames_by_type_and_datetimes(heatmap, datetimes)
+    def provide_frames_by_type_and_datetimes(self, datetimes = None):
+        return super().provide_frames_by_type_and_datetimes("temperature", datetimes)
 
 
 class PressureProvider(DataProvider):
@@ -219,11 +219,11 @@ class PressureProvider(DataProvider):
         super().__init__(meteo_db_url, last)
 
 
-    def provide(self, column="pressure"):
-        return super().provide(column)
+    def provide_stations_by_datetimes(self, datetimes=None):
+        return super().provide_stations_by_datetimes(column="pressure", datetimes=datetimes)
 
-    def provide_frames_by_type_and_datetimes(self, heatmap="pressure", datetimes = None):
-        return super().provide_frames_by_type_and_datetimes(heatmap, datetimes)
+    def provide_frames_by_type_and_datetimes(self, datetimes = None):
+        return super().provide_frames_by_type_and_datetimes("pressure", datetimes)
 
 
 class HumidityProvider(DataProvider):
@@ -231,11 +231,11 @@ class HumidityProvider(DataProvider):
     def __init__(self, meteo_db_url, last=1):
         super().__init__(meteo_db_url, last)
 
-    def provide(self, column="humidity"):
-        return super().provide(column)
+    def provide_stations_by_datetimes(self, datetimes=None):
+        return super().provide_stations_by_datetimes(column="humidity", datetimes=datetimes)
 
-    def provide_frames_by_type_and_datetimes(self, heatmap="humidity", datetimes = None):
-        return super().provide_frames_by_type_and_datetimes(heatmap, datetimes)
+    def provide_frames_by_type_and_datetimes(self, datetimes = None):
+        return super().provide_frames_by_type_and_datetimes("humidity", datetimes)
 
 
 class  PrecipitationProvider(DataProvider):
@@ -243,11 +243,11 @@ class  PrecipitationProvider(DataProvider):
     def __init__(self, meteo_db_url, last=1):
         super().__init__(meteo_db_url, last)
 
-    def provide(self, column="precipitation"):
-        return super().provide(column)
+    def provide_stations_by_datetimes(self, datetimes=None):
+        return super().provide_stations_by_datetimes(column="precipitation", datetimes=datetimes)
 
-    def provide_frames_by_type_and_datetimes(self, heatmap="precipitation", datetimes = None):
-        return super().provide_frames_by_type_and_datetimes(heatmap, datetimes)
+    def provide_frames_by_type_and_datetimes(self, datetimes = None):
+        return super().provide_frames_by_type_and_datetimes("precipitation", datetimes)
 
 
 class WindProvider(DataProvider):
@@ -258,6 +258,9 @@ class WindProvider(DataProvider):
     def provide(self, column="wind_speed"):
         return super().provide(column)
 
-    def provide_frames_by_type_and_datetimes(self, heatmap="wind", datetimes = None):
-        return super().provide_frames_by_type_and_datetimes(heatmap, datetimes)
+    def provide_stations_by_datetimes(self, datetimes = None):
+        return super().provide_stations_by_datetimes(column="wind_speed", datetimes=datetimes)
+
+    def provide_frames_by_type_and_datetimes(self, datetimes = None):
+        return super().provide_frames_by_type_and_datetimes(heatmap = "wind_speed", datetimes=datetimes)
 

@@ -117,7 +117,7 @@ class HeatMap:
 
         logger.debug("Generate frames")
         frames = dict()
-        stations = self.dataprovider.provide_stations_by_datetimes(self.heatmap_type, date_times)
+        stations = self.dataprovider.provide_stations_by_datetimes(datetimes=date_times)
 
         with ProcessPoolExecutor(max_workers=self.max_workers) as executor:
             futures = [
@@ -145,7 +145,7 @@ class HeatMap:
         Returns:
             list: List of frames from persistence.
         """
-        frames = self.dataprovider.provide_frames_by_type_and_datetimes(self.heatmap_type, datetime)
+        frames = self.dataprovider.provide_frames_by_type_and_datetimes(datetime)
         return frames
 
 
@@ -215,7 +215,7 @@ class HeatMap:
 
         cached_frames = dict()
         if self.usedb:
-            cached_frames = self.dataprovider.provide_frames_by_type_and_datetimes(heatmap=self.heatmap_type, datetimes=last_date_times)
+            cached_frames = self.dataprovider.provide_frames_by_type_and_datetimes(datetimes=last_date_times)
 
         map_keys = set(cached_frames.keys())
         list_set = set(last_date_times)
