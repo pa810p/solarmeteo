@@ -151,7 +151,6 @@ class HeatmapCreator:
 
         # Station points with names
         for lon, lat, name, temp in zip(lons, lats, names, temps):
-
             if name in display_labels:
                 ax.scatter(
                     lon, lat,
@@ -161,7 +160,7 @@ class HeatmapCreator:
                     s=60,
                     edgecolor='black',
                     linewidth=0.4,
-                    zorder=10
+                    zorder=5
                 )
                 ax.text(
                     lon + 0.05, lat + 0.03,
@@ -169,7 +168,8 @@ class HeatmapCreator:
                     fontsize=6,
                     ha='left',
                     va='bottom',
-                    bbox=dict(facecolor='white', alpha=0.7, edgecolor='none', pad=1)
+                    bbox=dict(facecolor='white', alpha=0.7, edgecolor='none', pad=1),
+                    zorder=2
                 )
 
         # Add administrative boundaries
