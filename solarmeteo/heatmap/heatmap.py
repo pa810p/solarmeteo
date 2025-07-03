@@ -161,7 +161,7 @@ class HeatMap:
         # sorted_frames = [image for datetime, image in sorted(frames, key=lambda x: x[0])]
         sorted_frames = dict(sorted(frames.items()))
 
-        imageio.mimsave(f"{self.output_file}", list(sorted_frames.values()), duration=200, palettesize=256, subrectangles=True)
+        imageio.mimsave(f"{self.output_file}", list(sorted_frames.values()), duration=300, palettesize=256, subrectangles=True)
         # imageio.mimsave("animation.mp4", sorted_frames, format="mp4", duration=0.2)  # Save as MP4# Duration per frame (sec)
         logger.debug(f"{self.heatmap_type.capitalize()} heatmap generation completed at {datetime.now()}")
 
@@ -228,11 +228,12 @@ class HeatMap:
         sorted_frames = dict(sorted(frames.items()))
 
         pil_frames = [Image.fromarray(frame) for frame in list(sorted_frames.values())]
+        durations = [300] * (len(pil_frames) - 1) + [3000]
         pil_frames[0].save(
             f"{self.output_file}",
             save_all=True,
             append_images=pil_frames[1:],
-            duration=200,
+            duration=durations,
             loop=0,
             quality=85  # Adjust quality (0-100)
         )
