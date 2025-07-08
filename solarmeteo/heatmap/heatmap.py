@@ -127,7 +127,8 @@ class HeatMap:
 
             for future in as_completed(futures):
                 (datetime, frame) = future.result()
-                frames [datetime] = frame
+                if frame is not None:
+                    frames [datetime] = frame
 
         if persist:
             self.dataprovider.store_frames(self.heatmap_type, frames)

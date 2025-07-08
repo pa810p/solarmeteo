@@ -55,7 +55,7 @@ class TestHeatMap(unittest.TestCase):
         hm.generate()
 
         # then
-        frames = hm.dataprovider.provide_frames_by_type_and_datetimes(heatmap='temperature', datetimes=['2025-06-23 17:00:00', '2025-06-23 18:00:00'])
+        frames = hm.dataprovider.provide_frames_by_type_and_datetimes(datetimes=['2025-06-23 17:00:00', '2025-06-23 18:00:00'])
         self.assertIsNotNone(frames)
         self.assertEqual(2, len(frames))
         self.assertIsNotNone(frames[datetime.datetime(2025, 6, 23, 18, 0, 0)])
@@ -72,7 +72,7 @@ class TestHeatMap(unittest.TestCase):
                      output_file=output_filepath, file_format='png',
                      usedb=False, persist=False)
         hm.generate()
-        frames = hm.dataprovider.provide_frames_by_type_and_datetimes(heatmap='temperature', datetimes=['2025-06-23 17:00:00', '2025-06-23 18:00:00'])
+        frames = hm.dataprovider.provide_frames_by_type_and_datetimes(datetimes=['2025-06-23 17:00:00', '2025-06-23 18:00:00'])
 
         # then
         self.assertTrue(os.path.exists(output_filepath))
@@ -90,7 +90,7 @@ class TestHeatMap(unittest.TestCase):
                      output_file=output_filepath, file_format='png',
                      usedb=False, persist=True)
         hm.generate()
-        frames = hm.dataprovider.provide_frames_by_type_and_datetimes(heatmap='temperature', datetimes=['2025-06-23 17:00:00', '2025-06-23 18:00:00'])
+        frames = hm.dataprovider.provide_frames_by_type_and_datetimes(datetimes=['2025-06-23 17:00:00', '2025-06-23 18:00:00'])
 
         # then
         self.assertTrue(os.path.exists(output_filepath))
@@ -108,7 +108,7 @@ class TestHeatMap(unittest.TestCase):
              output_file=output_filepath, file_format='gif',
              usedb=False, persist=True)
         hm.generate()
-        frames = hm.dataprovider.provide_frames_by_type_and_datetimes(heatmap='pressure', datetimes=['2025-06-23 17:00:00', '2025-06-23 18:00:00'])
+        frames = hm.dataprovider.provide_frames_by_type_and_datetimes(datetimes=['2025-06-23 17:00:00', '2025-06-23 18:00:00'])
 
         # then
         self.assertTrue(os.path.exists(output_filepath))
@@ -128,7 +128,7 @@ class TestHeatMap(unittest.TestCase):
         hm = HeatMap(meteo_db_url=self.meteo_db_url, last=2, heatmap_type='humidity', max_workers=2, file_format='webp',
                      usedb=False, persist=True, output_file=output_filepath1)
         hm.generate()
-        frames = hm.dataprovider.provide_frames_by_type_and_datetimes(heatmap='humidity', datetimes=['2025-06-23 17:00:00', '2025-06-23 18:00:00'])
+        frames = hm.dataprovider.provide_frames_by_type_and_datetimes(datetimes=['2025-06-23 17:00:00', '2025-06-23 18:00:00'])
 
         # then
         self.assertTrue(os.path.exists(output_filepath1))
