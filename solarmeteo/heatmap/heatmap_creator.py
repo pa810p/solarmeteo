@@ -14,6 +14,12 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg
 
 from solarmeteo.heatmap.data_provider import StationValue
 
+from logging import getLogger
+
+
+
+logger = getLogger(__name__)
+
 
 class HeatmapCreator:
 
@@ -85,6 +91,7 @@ class HeatmapCreator:
         lats = np.array([s.lat for s in stations])
         temps = np.array([s.value for s in stations])
         names = np.array([s.name for s in stations])
+        directions = np.array([getattr(s, 'direction', None) for s in stations])  # Get directions if they exist
 
         if scale_min is not None and scale_max is not None:
             temps_scaled = (temps - scale_min) / (scale_max - scale_min)
@@ -109,7 +116,12 @@ class HeatmapCreator:
 
         # scaling because RBF requires normalized values because of problems with large values
         # it uses absolute values for interpolation
-        rbf = Rbf(x, y, temps_scaled, function='linear', smooth=1)
+        try:
+            rbf = Rbf(x, y, temps_scaled, function='linear', smooth=1)
+        except Exception as e:
+            logger.error(f"Interpolating heatmap exception {e} on datetime: {displaydate}")
+            return None
+
         grid_temp_scaled = rbf(xx, yy)
         if scale_min is not None and scale_max is not None:
             grid_temp = grid_temp_scaled * (scale_max - scale_min) + scale_min
@@ -149,8 +161,24 @@ class HeatmapCreator:
             extend='neither'
         )
 
+        # Get current limits before adding arrows
+        xlim = ax.get_xlim()
+        ylim = ax.get_ylim()
+
+        # Calculate asymmetric padding
+        plot_height = ylim[1] - ylim[0]
+        x_pad = (xlim[1] - xlim[0]) * 0.02
+        y_pads = {
+            'bottom': plot_height * 0.02,
+            'top': plot_height * 0.08  # 4x more space at top
+        }
+
+        # Set new limits
+        ax.set_xlim(xlim[0] - x_pad, xlim[1] + x_pad)
+        ax.set_ylim(ylim[0] - y_pads['bottom'], ylim[1] + y_pads['top'])
+
         # Station points with names
-        for lon, lat, name, temp in zip(lons, lats, names, temps):
+        for lon, lat, name, temp, direction in zip(lons, lats, names, temps, directions):
             if name in display_labels:
                 ax.scatter(
                     lon, lat,
@@ -162,6 +190,7 @@ class HeatmapCreator:
                     linewidth=0.4,
                     zorder=5
                 )
+
                 ax.text(
                     lon + 0.05, lat + 0.03,
                     f"{name} ({temp:.1f})",
@@ -171,6 +200,24 @@ class HeatmapCreator:
                     bbox=dict(facecolor='white', alpha=0.7, edgecolor='none', pad=1),
                     zorder=2
                 )
+
+            if direction is not None:
+                    rad = np.radians(direction)
+                    # Calculate arrow components (shorter arrow)
+                    dx = 0.2 * np.sin(rad)  # 0.1° longitude length
+                    dy = 0.2 * np.cos(rad)  # 0.1° latitude length
+
+                    ax.arrow(
+                        lon, lat,
+                        dx, dy,
+                        head_width=0.08,  # Smaller head width
+                        head_length=0.1,  # Smaller head length
+                        fc='black',
+                        ec='black',
+                        linewidth=0.3,
+                        zorder=6
+                    )
+
 
         # Add administrative boundaries
         voivodeships_ll.boundary.plot(
@@ -202,18 +249,21 @@ class HeatmapCreator:
 
 
     def generate_image(self, stations, displaydate, display_labels):
+        logger.debug(f"Generate image for: {displaydate}")
         fig = self.generate(stations=stations, displaydate=displaydate, display_labels=display_labels)
-        try:
-            canvas = FigureCanvasAgg(fig)
-            canvas.draw()
-            buf = canvas.buffer_rgba()
-            img = np.asarray(buf).reshape((*reversed(canvas.get_width_height()), 4))
-            # img = np.array(canvas.renderer.buffer_rgba())
-            img = img[:, :, :3]  # Drop alpha channel if present
-        finally:
-            plt.close(fig)
-
-        return displaydate, img
+        if fig is not None:
+            try:
+                canvas = FigureCanvasAgg(fig)
+                canvas.draw()
+                buf = canvas.buffer_rgba()
+                img = np.asarray(buf).reshape((*reversed(canvas.get_width_height()), 4))
+                # img = np.array(canvas.renderer.buffer_rgba())
+                img = img[:, :, :3]  # Drop alpha channel if present
+            finally:
+                plt.close(fig)
+            return displaydate, img
+        else:
+            return displaydate, None
 
 
 

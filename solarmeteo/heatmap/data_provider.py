@@ -24,6 +24,9 @@ class StationValue:
     value: np.float64
     name: str
 
+@dataclass
+class StationWindValue(StationValue):
+    direction: np.int16
 
 class DataProvider:
 
@@ -259,7 +262,47 @@ class WindProvider(DataProvider):
         return super().provide(column)
 
     def provide_stations_by_datetimes(self, datetimes = None):
-        return super().provide_stations_by_datetimes(column="wind_speed", datetimes=datetimes)
+        session = self.create_session()
+
+        results = session.execute(
+            select(
+                StationData.datetime,
+                Station.longitude,
+                Station.latitude,
+                StationData.wind_speed,
+                StationData.wind_direction,
+                Station.name
+            )
+            .join(Station, Station.id == StationData.station_id)
+            .where(
+                and_(
+                    and_(
+                        StationData.datetime.in_(datetimes),
+                        StationData.wind_speed.isnot(None)
+                    ),
+                    StationData.wind_direction.isnot(None)
+                )
+                )
+            .order_by(StationData.datetime.desc())
+        ).all()
+
+        session.close()
+
+        datetime_to_stations = defaultdict(list)
+        for datetime, lon, lat, value, direction, name in results:
+            datetime_to_stations[datetime].append(
+                StationWindValue(np.float64(lon), np.float64(lat), np.float64(value), name, np.int16(direction))
+            )
+
+        sorted_map = sorted(
+            datetime_to_stations.items(),
+            key=lambda x: x[0],
+            reverse=True
+        )
+
+        return sorted_map
+
+        # return super().provide_stations_by_datetimes(column="wind_speed", datetimes=datetimes)
 
     def provide_frames_by_type_and_datetimes(self, datetimes = None):
         return super().provide_frames_by_type_and_datetimes(heatmap = "wind", datetimes=datetimes)
