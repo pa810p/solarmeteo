@@ -106,7 +106,7 @@ class GiosUpdater(Updater):
                             session.rollback()
                             logger.warning(f"Constraint violation on {station.gios_id} added {column}={value} on {datetime}")
                     else:
-                        logger.debug(f"{station.id} {index}=null ")
+                        logger.debug(f"{station.gios_id} {index}=null ")
                 # randomized dela between requests
                 time.sleep(random.uniform(1, self.max_delay_sec))
         finally:
