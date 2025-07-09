@@ -39,8 +39,8 @@ class Updater:
         session = sessionmaker(bind=self.create_connection())
         return session()
 
-    def get(self, url):
-        response = requests.get(url)
+    def get(self, url, timeout=30):
+        response = requests.get(url, timeout=timeout)
         logger.debug('GET: %s status code: %s' % (url, str(response.status_code)))
         if response.status_code == 200:
             return response.json()

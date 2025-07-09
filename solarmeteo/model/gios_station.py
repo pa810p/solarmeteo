@@ -1,10 +1,6 @@
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Float, String, Integer, Sequence
 from sqlalchemy.orm import relationship
-
-
-Base = declarative_base()
-
+from .base import Base
 
 class GiosStation(Base):
     __tablename__ = 'gios_station'
@@ -22,7 +18,8 @@ class GiosStation(Base):
     street = Column(String)
     station_code = Column(String)
 
-    gios_station_data = relationship("GiosStationData", back_populates="gios_station")
+    # Use consistent naming (station_data instead of gios_station_data)
+    station_data = relationship("GiosStationData", back_populates="station")
 
     def __init__(self, station_name, gios_id, longitude=None, latitude=None, voivodeship=None,
                  district=None, commune=None, city_id=None, city_name=None, street=None, station_code=None):

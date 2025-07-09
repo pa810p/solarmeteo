@@ -19,7 +19,7 @@ url = postgresql://${username}:${password}@${host}:${port}/meteo${meteo:environm
 solar_update_interval = 900
 imgw_update_interval = 3600
 
-# imgw or solar or both
+# imgw or solar or gios or all
 modules = solar
 
 [imgw]
@@ -37,3 +37,7 @@ url = https://monitoringapi.solaredge.com
 longitude = 21.0276
 latitude = 52.2131
 height = 106
+
+[gios]
+url = https://api.gios.gov.pl/pjp-api/v1/rest
+max_delay_sec = 8

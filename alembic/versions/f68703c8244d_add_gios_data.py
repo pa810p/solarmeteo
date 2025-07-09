@@ -27,7 +27,7 @@ def upgrade():
         'gios_station',
         Column('id', Integer, Sequence('gios_station_id_seq'), primary_key=True,
                server_default=sa.text("nextval('gios_station_id_seq')")),
-        Column('station_name', String, nullable=False),
+        Column('station_name', String, nullable=False, unique=True),
         Column('gios_id', Integer, nullable=False, index=True, unique=True),
         Column('longitude', Float),
         Column('latitude', Float),
@@ -45,8 +45,8 @@ def upgrade():
         'gios_parameter',
         Column('id', Integer, Sequence('gios_parameter_id_seq'), primary_key=True,
                server_default=sa.text("nextval('gios_parameter_id_seq')")),
-        Column('name', String, nullable=False),
-    )
+        Column('name', String, nullable=False, unique=True)),
+
 
     gios_parameter_table = Table(
         'gios_parameter',
@@ -72,16 +72,17 @@ def upgrade():
         'gios_station_data',
         Column('id', Integer, Sequence('gios_station_data_id_seq'), primary_key=True,
                server_default=sa.text("nextval('gios_station_data_id_seq')")),
-        Column('station_id', Integer, sa.ForeignKey('gios_station.id'), nullable=False),
+        Column('gios_station_id', Integer, sa.ForeignKey('gios_station.id'), nullable=False),
         Column('parameter_id', Integer, sa.ForeignKey('gios_parameter.id'), nullable=False),
         Column('datetime', DateTime, nullable=False),
         Column('value', Integer),
-        Column('critical', Boolean)
     )
-    # op.create_index('ix_gios_station_gios_id', 'gios_station', ['gios_id'], unique=True)
+    op.create_index('ix_gios_station_data_station_parameter_datetime', 'gios_station_data',
+                    ['gios_station_id', 'parameter_id', 'datetime'], unique=True)
 
 
 def downgrade():
+    op.drop_index('ix_gios_station_data_station_parameter_datetime')
     op.drop_index('ix_gios_station_gios_id')
     op.drop_table('gios_station_data')
     op.execute(DropSequence(Sequence('gios_station_data_id_seq')))
