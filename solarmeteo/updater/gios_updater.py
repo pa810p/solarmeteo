@@ -103,6 +103,7 @@ class GiosUpdater(Updater):
                             session.commit()
                             logger.debug(f"{station.gios_id} added {column}={value} on {datetime}")
                         except IntegrityError:
+                            session.rollback()
                             logger.warning(f"Constraint violation on {station.gios_id} added {column}={value} on {datetime}")
                     else:
                         logger.debug(f"{station.id} {index}=null ")
