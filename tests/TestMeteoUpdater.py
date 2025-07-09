@@ -10,7 +10,7 @@ import json
 
 from tests import StationCommon
 
-from solarmeteo.meteo_updater.meteo_updater import MeteoUpdater
+from solarmeteo.updater.meteo_updater import MeteoUpdater
 
 from tests.SolarMeteoTestConfig import SolarMeteoTestConfig
 

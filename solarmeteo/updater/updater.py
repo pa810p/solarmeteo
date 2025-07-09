@@ -16,6 +16,12 @@ logger = getLogger(__name__)
 class Updater:
 
     def __init__(self, meteo_db_url, updater_interval):
+        """
+        Base class of updaters
+
+        :param meteo_db_url:
+        :param updater_interval: obsolete, daemon mode will not be used anymore
+        """
         self.meteo_db_url = meteo_db_url
         self.updater_interval = updater_interval
 

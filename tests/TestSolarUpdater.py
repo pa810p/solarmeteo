@@ -11,7 +11,7 @@ from mockito import when, eq
 
 import json
 
-from solarmeteo.meteo_updater.solar_updater import SolarUpdater
+from solarmeteo.updater.solar_updater import SolarUpdater
 from tests.SolarMeteoTestConfig import SolarMeteoTestConfig
 
 IMGW_STATION_ID = 'id_stacji'

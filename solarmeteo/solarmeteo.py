@@ -11,8 +11,9 @@ import optparse
 
 from solarmeteo.heatmap.heatmap import HeatMap
 from solarmeteo.logger.logs import get_log_level, setup_logging
-from solarmeteo.meteo_updater.meteo_updater import MeteoUpdater
-from solarmeteo.meteo_updater.solar_updater import SolarUpdater
+from solarmeteo.updater.gios_updater import GiosUpdater
+from solarmeteo.updater.meteo_updater import MeteoUpdater
+from solarmeteo.updater.solar_updater import SolarUpdater
 
 
 def main():
@@ -48,6 +49,8 @@ def main():
     generate_cache = False
     persist = False
     usedb = False
+    gios_url = config['gios']['url']
+    gios_stations = False
 
     # and now overwrite them with command line if exists
     parser = optparse.OptionParser(usage="%prog [-b] [-m] [-i] [-f] [-l] [-o]", version=ver, description=desc)
@@ -84,10 +87,11 @@ def main():
     parser.add_option('--overwrite', dest='overwrite', help='cached frame will be overwritten with generated one', action='store_true')
     parser.add_option('--persist', dest='persist', help='persist frames in database', action='store_true')
     parser.add_option('--usedb', dest='usedb', help='use database persisted frames if available', action='store_true')
+    parser.add_option("--gios-stations", dest="gios_stations", help="update gios stations database", action='store_true')
 
     # option not in properties
     # TODO: check if default can be set if empty in here
-    parser.add_option('-u', '--update', dest='update', help='service to update [imgw, solar], default is both')
+    parser.add_option('-u', '--update', dest='update', help='service to update [imgw, solar, gios], default is both')
 
     (options, args) = parser.parse_args()
 
@@ -167,6 +171,8 @@ def main():
     if options.usedb is not None and not '':
         usedb = options.usedb
 
+    if options.gios_stations is not None and not '':
+        gios_stations = options.gios_stations
 
     setup_logging(level=get_log_level(log_level), project_prefix="solarmeteo")
     logger = logging.getLogger("solarmeteo.*")
@@ -234,6 +240,10 @@ def main():
             hm = HeatMap(meteo_db_url=meteo_db_url, last=last_hours, heatmap_type=frametype, max_workers=max_workers,
                          file_format='cache')
             hm.generate()
+
+    if gios_stations:
+        gios_updater = GiosUpdater(meteo_db_url=meteo_db_url, gios_url=gios_url)
+        gios_updater.update_stations()
 
 
 if __name__ == '__main__':
