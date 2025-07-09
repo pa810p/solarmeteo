@@ -51,7 +51,7 @@ def main():
     usedb = False
     gios_url = config['gios']['url']
     gios_stations = False
-    gios_max_delay_sec = config['gios']['max_delay_sec']
+    gios_max_delay_sec = int(config['gios']['max_delay_sec'])
 
     # and now overwrite them with command line if exists
     parser = optparse.OptionParser(usage="%prog [-b] [-m] [-i] [-f] [-l] [-o]", version=ver, description=desc)
