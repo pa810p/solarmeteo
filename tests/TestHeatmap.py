@@ -7,7 +7,7 @@ import imageio.v3 as iio
 from PIL import Image
 import numpy as np
 
-from solarmeteo.meteo_updater.meteo_updater import MeteoUpdater
+from solarmeteo.updater.meteo_updater import MeteoUpdater
 from tests import StationCommon
 
 from solarmeteo.heatmap.heatmap import HeatMap

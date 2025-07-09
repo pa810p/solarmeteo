@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 from solarmeteo.model.station_data import StationData, IMGW_DATE, IMGW_HOUR, IMGW_TEMPERATURE, IMGW_WIND_SPEED, \
     IMGW_WIND_DIRECTION, IMGW_HUMIDITY, IMGW_PRECIPITATION, IMGW_PRESSURE
 from solarmeteo.model.station import Station, IMGW_STATION_ID, IMGW_STATION_NAME
-from solarmeteo.meteo_updater.updater import Updater
+from solarmeteo.updater.updater import Updater
 
 from logging import getLogger
 
@@ -188,7 +188,8 @@ class MeteoUpdater (Updater):
         """
         This method is a wrapper for update method, it will periodically call update method as configured in
         properties or command line parameters
-        TODO: This method is not UNIT TESTED!
+
+        :obsolete: This method is obsolete and will not be used anymore.
         """
         while True:
             logger.info('IMGW will update as a daemon')

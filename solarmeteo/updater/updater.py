@@ -16,6 +16,12 @@ logger = getLogger(__name__)
 class Updater:
 
     def __init__(self, meteo_db_url, updater_interval):
+        """
+        Base class of updaters
+
+        :param meteo_db_url:
+        :param updater_interval: obsolete, daemon mode will not be used anymore
+        """
         self.meteo_db_url = meteo_db_url
         self.updater_interval = updater_interval
 
@@ -33,8 +39,8 @@ class Updater:
         session = sessionmaker(bind=self.create_connection())
         return session()
 
-    def get(self, url):
-        response = requests.get(url)
+    def get(self, url, timeout=30):
+        response = requests.get(url, timeout=timeout)
         logger.debug('GET: %s status code: %s' % (url, str(response.status_code)))
         if response.status_code == 200:
             return response.json()

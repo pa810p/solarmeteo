@@ -8,7 +8,7 @@ from datetime import datetime
 
 import unittest
 
-from solarmeteo.meteo_updater import sun
+from solarmeteo.updater import sun
 
 
 class TestSun(unittest.TestCase):
