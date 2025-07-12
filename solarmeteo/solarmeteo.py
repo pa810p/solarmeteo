@@ -11,6 +11,7 @@ import optparse
 
 from solarmeteo.heatmap.heatmap import HeatMap
 from solarmeteo.logger.logs import get_log_level, setup_logging
+from solarmeteo.updater.esa_updater import EsaUpdater
 from solarmeteo.updater.gios_updater import GiosUpdater
 from solarmeteo.updater.meteo_updater import MeteoUpdater
 from solarmeteo.updater.solar_updater import SolarUpdater
@@ -52,6 +53,7 @@ def main():
     gios_url = config['gios']['url']
     gios_stations = False
     gios_max_delay_sec = int(config['gios']['max_delay_sec'])
+    esa_url = config['esa']['url']
 
     # and now overwrite them with command line if exists
     parser = optparse.OptionParser(usage="%prog [-b] [-m] [-i] [-f] [-l] [-o]", version=ver, description=desc)
@@ -230,6 +232,10 @@ def main():
     if update == 'all' or update == 'gios':
         gios_updater = GiosUpdater(meteo_db_url=meteo_db_url, gios_url=gios_url, max_delay_sec=gios_max_delay_sec)
         gios_updater.update_all_stations_data()
+
+    if update == 'all' or update == 'esa':
+        esa_updater = EsaUpdater(meteo_db_url=meteo_db_url, esa_data_url=esa_url)
+        esa_updater.update()
 
     if heatmap is not None:
         if output_file is None:
