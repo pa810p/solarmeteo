@@ -27,7 +27,7 @@ def upgrade():
     op.create_table(
         'esa_station',
         Column('id', Integer(), Sequence('esa_station_id_seq'), primary_key=True,
-               server_default=text("nextval('esa_station_id_seq")),
+               server_default=text("nextval('esa_station_id_seq')")),
         Column('name', String(), nullable=False),
         Column('street', String()),
         Column('post_code', String()),
@@ -35,12 +35,12 @@ def upgrade():
         Column('longitude', Float(), nullable=False),
         Column('latitude', Float(), nullable=False))
 
-    op.execute(CreateSequence(Sequence('esa_station_id_seq')))
+    op.execute(CreateSequence(Sequence('esa_station_data_id_seq')))
 
     op.create_table(
         'esa_station_data',
         Column('id', Integer(), Sequence('esa_station_data_id_seq'), primary_key=True,
-                  server_default=text("nextval('esa_station_data_id_seq'")),
+                  server_default=text("nextval('esa_station_data_id_seq')")),
         Column('esa_station_id', Integer(), ForeignKey('esa_station.id'), nullable=False),
         Column('humidity', Float(), nullable=False),
         Column('pressure', Float(), nullable=False),
