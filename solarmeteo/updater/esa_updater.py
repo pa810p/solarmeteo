@@ -1,5 +1,8 @@
+from operator import truediv
+
+import sqlalchemy
+
 from solarmeteo.model import EsaStation, EsaStationData
-from solarmeteo.model.station import Station, IMGW_STATION_ID, IMGW_STATION_NAME
 from solarmeteo.updater.updater import Updater
 
 from logging import getLogger
@@ -17,17 +20,15 @@ class EsaUpdater(Updater):
         self.esa_data_url = esa_data_url
 
 
-    def _find_station_by_name(self, name):
-        session = self.create_session()
-        station = session.query(Station).filter(Station.name == name).first()
-        session.close()
+    def _find_station_by_name(self, session, name):
+        station = session.query(EsaStation).filter(EsaStation.name == name).first()
         return station
 
 
-    def _save_station(self, station_json):
-        school_data = station_json.get("school")
+    def _save_station(self, session, school_data):
+        # school_data = station_json.get("school")
         if not school_data:
-            logger.error("No 'school' key in station_json")
+            logger.error("No 'school' data")
             return None
 
         station = EsaStation(
@@ -39,27 +40,32 @@ class EsaUpdater(Updater):
             latitude=school_data.get("latitude"),
         )
 
-        session = self.create_session()
         session.add(station)
         session.commit()
-        session.close()
         logger.info(f"Created: {station}")
         return station
 
 
-    def _get_station(self, station_json):
-        station = self._find_station_by_name(station_json["name"])
+    def _get_station(self, session, station_json):
+        station = self._find_station_by_name(session, station_json["name"])
         if not station:
-            station = self._save_station(station_json)
+            station = self._save_station(session, station_json)
             
         return station
-    
+
+
+    def _is_valid(self, esa_station_data) -> bool:
+        return True
+
     
     def update(self):
         esa_json = self.get(self.esa_data_url)
-        
+
+        session = self.create_session()
+
         for smog in esa_json["smog_data"]:
-            station = self._get_station(smog["school"])
+
+            station = self._get_station(session, smog["school"])
             data = smog.get("data", {})
 
             esa_station_data = EsaStationData(
@@ -70,22 +76,21 @@ class EsaUpdater(Updater):
                 pm10=data.get("pm10_avg"),
                 pm25=data.get("pm25_avg"),
                 datetime=smog["timestamp"]
-            )
+                )
 
+            if self._is_valid(esa_station_data):
+                try:
+                    session.add(esa_station_data)
+                    session.commit()
+                    logger.debug(f"Added new station data with id: {esa_station_data.id}")
 
+                except sqlalchemy.exc.IntegrityError as exception:
+                    session.rollback()
+                    logger.warning(f"Constraint violation on {esa_station_data.esa_station_id}, Exception: {exception.orig}")
+            else:
+                logger.warning(f"Invalid EsaStationData object: {esa_station_data}")
 
+        # finally:
+        session.close_all()
+        logger.debug("Session closed")
 
-
-
-
-"""
-
-esa_station = EsaStation(
-     name="SZKOŁA PODSTAWOWA IM. MARIANA FALSKIEGO W KRASZEWICACH",
-     street="UL. SZKOLNA",
-     post_code="63-522",
-     city="KRASZEWICE",
-     longitude="18.22403",
-     latitude="51.51563"
- )
-"""

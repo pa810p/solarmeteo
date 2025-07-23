@@ -47,6 +47,7 @@ def upgrade():
 
 
 def downgrade():
+    op.drop_constraint('uq_station_id_datetime', 'station_data', type_='unique')
     op.drop_table('station_data')
     op.execute(DropSequence(Sequence('station_data_id_seq')))
     op.drop_index('ix_station_imgw_id')

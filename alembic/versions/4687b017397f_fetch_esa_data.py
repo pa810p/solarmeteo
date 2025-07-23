@@ -28,7 +28,7 @@ def upgrade():
         'esa_station',
         Column('id', Integer(), Sequence('esa_station_id_seq'), primary_key=True,
                server_default=text("nextval('esa_station_id_seq')")),
-        Column('name', String(), nullable=False),
+        Column('name', String(), nullable=False, unique=True),
         Column('street', String()),
         Column('post_code', String()),
         Column('city', String()),
@@ -36,7 +36,6 @@ def upgrade():
         Column('latitude', Float(), nullable=False))
 
     op.execute(CreateSequence(Sequence('esa_station_data_id_seq')))
-
     op.create_table(
         'esa_station_data',
         Column('id', Integer(), Sequence('esa_station_data_id_seq'), primary_key=True,
@@ -47,11 +46,13 @@ def upgrade():
         Column('temperature', Float(), nullable=False),
         Column('pm10', Float(), nullable=False),
         Column('pm25', Float(), nullable=False),
-        Column('timestamp', DateTime(), nullable=False)
+        Column('datetime', DateTime(), nullable=False)
     )
+    op.create_unique_constraint('uq_esa_station_id_datetime', 'esa_station_data', ['esa_station_id', 'datetime'])
 
 
 def downgrade():
+    op.drop_constraint('uq_esa_station_id_datetime', 'esa_station_data', type_='unique')
     op.drop_table('esa_station_data')
     op.execute(DropSequence(Sequence('esa_station_data_id_seq')))
     op.drop_table('esa_station')

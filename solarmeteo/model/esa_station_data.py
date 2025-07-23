@@ -13,7 +13,7 @@ class EsaStationData(Base):
     temperature = Column(Float, nullable=False)
     pm10 = Column(Float, nullable=False)
     pm25 = Column(Float, nullable=False)
-    timestamp = Column(DateTime, nullable=False)
+    datetime = Column(DateTime, nullable=False)
 
     station = relationship("EsaStation", back_populates="station_data")
 
