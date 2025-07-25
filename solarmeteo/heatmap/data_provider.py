@@ -11,6 +11,7 @@ import numpy as np
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import sessionmaker
 
+from solarmeteo.model import EsaStationData
 from solarmeteo.model.frame import FrameType, Frame
 from solarmeteo.model.station import Station
 from solarmeteo.model.station_data import StationData
@@ -306,4 +307,56 @@ class WindProvider(DataProvider):
 
     def provide_frames_by_type_and_datetimes(self, datetimes = None):
         return super().provide_frames_by_type_and_datetimes(heatmap = "wind", datetimes=datetimes)
+
+
+class ESAProvider(DataProvider):
+
+    def __init__(self, meteo_db_url, last=1):
+        super().__init__(meteo_db_url, last)
+
+    def get_last_datetimes(self, last):
+        session = self.create_session()
+
+        latest_datetimes = session.execute(
+            select(EsaStationData.datetime)
+            .distinct()
+            .order_by(EsaStationData.datetime.desc())
+            .limit(last)
+        ).scalars().all()
+
+        session.close()
+
+        return latest_datetimes
+
+    def provide_stations_by_datetimes(self, column, datetimes):
+        session = self.create_session()
+
+
+
+        session.close_all()
+
+
+class PM10Provider(ESAProvider):
+
+    def __init__(self, meteo_db_url, last=1):
+        super().__init__(meteo_db_url, last)
+
+    def provide_stations_by_datetimes(self, datetimes=None):
+        return super().provide_stations_by_datetimes(column="pm10", datetimes=datetimes)
+
+    def provide_frames_by_type_and_datetimes(self, datetimes = None):
+        return super().provide_frames_by_type_and_datetimes("pm10", datetimes)
+
+
+class PM25Provider(ESAProvider):
+
+    def __init__(self, meteo_db_url, last=1):
+        super().__init__(meteo_db_url, last)
+
+    def provide_stations_by_datetimes(self, datetimes=None):
+        return super().provide_stations_by_datetimes(column="pm10", datetimes=datetimes)
+
+    def provide_frames_by_type_and_datetimes(self, datetimes = None):
+        return super().provide_frames_by_type_and_datetimes("pm10", datetimes)
+
 

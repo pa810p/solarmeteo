@@ -266,7 +266,6 @@ class HeatmapCreator:
             return displaydate, None
 
 
-
 class TemperatureCreator(HeatmapCreator):
 
     _COLORMAP = LinearSegmentedColormap.from_list(
@@ -393,3 +392,56 @@ class PrecipitationCreator(HeatmapCreator):
             display_labels=display_labels
         )
 
+
+class PM10reator(HeatmapCreator):
+    _COLORMAP = LinearSegmentedColormap.from_list(
+        'pm10_cmap',
+        [
+            (0.0, '#f7fbff'),   # Very light blue
+            (0.25, '#c6dbef'),  # Light blue
+            (0.5, '#6baed6'),   # Medium blue
+            (0.75, '#2171b5'),  # Deep blue
+            (1.0, '#08306b')    # Dark blue
+        ]
+    )
+
+    def __init__(self):
+        super().__init__()
+
+    def generate(self, stations, displaydate, display_labels):
+        return self.generate_heatmap(
+            stations=stations,
+            colormap=self._COLORMAP,
+            displaydate=displaydate,
+            vmin=0, vmax=10,
+            label="PM 10 (ppm)",
+            scale_min=0, scale_max=10,
+            display_labels=display_labels
+        )
+
+
+class PM25reator(HeatmapCreator):
+    _COLORMAP = LinearSegmentedColormap.from_list(
+        'pm10_cmap',
+        [
+            (0.0, '#f7fbff'),   # Very light blue
+            (0.25, '#c6dbef'),  # Light blue
+            (0.5, '#6baed6'),   # Medium blue
+            (0.75, '#2171b5'),  # Deep blue
+            (1.0, '#08306b')    # Dark blue
+        ]
+    )
+
+    def __init__(self):
+        super().__init__()
+
+    def generate(self, stations, displaydate, display_labels):
+        return self.generate_heatmap(
+            stations=stations,
+            colormap=self._COLORMAP,
+            displaydate=displaydate,
+            vmin=0, vmax=10,
+            label="PM 2.5 (ppm)",
+            scale_min=0, scale_max=10,
+            display_labels=display_labels
+        )

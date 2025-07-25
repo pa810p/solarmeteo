@@ -1,9 +1,9 @@
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
 from solarmeteo.heatmap.data_provider import TemperatureProvider, PressureProvider, PrecipitationProvider, HumidityProvider, \
-    WindProvider
+    WindProvider, PM10Provider, PM25Provider
 from solarmeteo.heatmap.heatmap_creator import TemperatureCreator, PressureCreator, PrecipitationCreator, HumidityCreator, \
-    WindCreator
+    WindCreator, PM10reator, PM25Creator
 
 import imageio.v2 as imageio
 from datetime import datetime
@@ -22,6 +22,8 @@ class CreatorFactory:
             case 'humidity' : return HumidityCreator()
             case 'precipitation': return PrecipitationCreator()
             case 'wind': return WindCreator()
+            case 'pm10': return PM10Creator()
+            case 'pm25': return PM25Creator()
             case _: return None
 
 
