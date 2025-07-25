@@ -8,10 +8,7 @@ from solarmeteo.updater.updater import Updater
 from logging import getLogger
 
 
-
 logger = getLogger(__name__)
-
-
 
 class EsaUpdater(Updater):
 
@@ -53,11 +50,30 @@ class EsaUpdater(Updater):
             
         return station
 
+    @classmethod
+    def _is_valid_esa_station_data(cls, esa_station_data) -> bool:
+        if any(value is None for value in [
+            esa_station_data.esa_station_id,
+            esa_station_data.humidity,
+            esa_station_data.pressure,
+            esa_station_data.temperature,
+            esa_station_data.pm10,
+            esa_station_data.pm25,
+            esa_station_data.datetime
+            ]):
+            return False
 
-    def _is_valid(self, esa_station_data) -> bool:
+        if any(value <= 0 for value in [
+            esa_station_data.humidity,
+            esa_station_data.pressure,
+            esa_station_data.pm10,
+            esa_station_data.pm25
+            ]):
+            return False
+
         return True
 
-    
+
     def update(self):
         esa_json = self.get(self.esa_data_url)
 
@@ -78,7 +94,7 @@ class EsaUpdater(Updater):
                 datetime=smog["timestamp"]
                 )
 
-            if self._is_valid(esa_station_data):
+            if self._is_valid_esa_station_data(esa_station_data):
                 try:
                     session.add(esa_station_data)
                     session.commit()

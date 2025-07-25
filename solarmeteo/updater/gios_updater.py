@@ -56,7 +56,7 @@ class GiosUpdater(Updater):
 
         session = self.create_session()
         for station_json in stations_json[LIST_OF_STATIONS]:
-            logger.debug(f"Got station name: {station_json["Nazwa stacji"]}")
+            logger.debug(f"Got station name: {station_json['Nazwa stacji']}")
 
             station = GiosStation(
                 gios_id=station_json["Identyfikator stacji"],
