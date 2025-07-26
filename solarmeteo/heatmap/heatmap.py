@@ -3,7 +3,7 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 from solarmeteo.heatmap.data_provider import TemperatureProvider, PressureProvider, PrecipitationProvider, HumidityProvider, \
     WindProvider, PM10Provider, PM25Provider
 from solarmeteo.heatmap.heatmap_creator import TemperatureCreator, PressureCreator, PrecipitationCreator, HumidityCreator, \
-    WindCreator, PM10reator, PM25Creator
+    WindCreator, PM10Creator, PM25Creator
 
 import imageio.v2 as imageio
 from datetime import datetime
@@ -37,6 +37,8 @@ class ProviderFactory:
             case 'humidity' : return HumidityProvider(meteo_db_url, last)
             case 'precipitation': return PrecipitationProvider(meteo_db_url, last)
             case 'wind': return WindProvider(meteo_db_url, last)
+            case 'pm25': return PM25Provider(meteo_db_url, last)
+            case 'pm10': return PM10Provider(meteo_db_url, last)
             case _: return None
 
 

@@ -393,7 +393,7 @@ class PrecipitationCreator(HeatmapCreator):
         )
 
 
-class PM10reator(HeatmapCreator):
+class PM10Creator(HeatmapCreator):
     _COLORMAP = LinearSegmentedColormap.from_list(
         'pm10_cmap',
         [
@@ -413,14 +413,14 @@ class PM10reator(HeatmapCreator):
             stations=stations,
             colormap=self._COLORMAP,
             displaydate=displaydate,
-            vmin=0, vmax=10,
+            vmin=0, vmax=50,
             label="PM 10 (ppm)",
-            scale_min=0, scale_max=10,
+            scale_min=0, scale_max=50,
             display_labels=display_labels
         )
 
 
-class PM25reator(HeatmapCreator):
+class PM25Creator(HeatmapCreator):
     _COLORMAP = LinearSegmentedColormap.from_list(
         'pm10_cmap',
         [
@@ -440,8 +440,8 @@ class PM25reator(HeatmapCreator):
             stations=stations,
             colormap=self._COLORMAP,
             displaydate=displaydate,
-            vmin=0, vmax=10,
+            vmin=0, vmax=50,
             label="PM 2.5 (ppm)",
-            scale_min=0, scale_max=10,
+            scale_min=0, scale_max=50,
             display_labels=display_labels
         )

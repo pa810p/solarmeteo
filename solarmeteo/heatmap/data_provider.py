@@ -8,10 +8,10 @@ from logging import getLogger
 
 import numpy as np
 
-from sqlalchemy import create_engine, select
+from sqlalchemy import create_engine, select, func
 from sqlalchemy.orm import sessionmaker
 
-from solarmeteo.model import EsaStationData
+from solarmeteo.model import EsaStationData, EsaStation
 from solarmeteo.model.frame import FrameType, Frame
 from solarmeteo.model.station import Station
 from solarmeteo.model.station_data import StationData
@@ -28,6 +28,7 @@ class StationValue:
 @dataclass
 class StationWindValue(StationValue):
     direction: np.int16
+
 
 class DataProvider:
 
@@ -331,10 +332,39 @@ class ESAProvider(DataProvider):
     def provide_stations_by_datetimes(self, column, datetimes):
         session = self.create_session()
 
+        data_column = getattr(EsaStationData, column)
 
+        query = (
+            select(
+                EsaStationData.datetime,
+                func.avg(EsaStation.longitude).label("avg_longitude"),
+                func.avg(EsaStation.latitude).label("avg_latitude"),
+                func.avg(data_column).label("value"),
+                EsaStation.city
+            )
+            .join(EsaStationData.station)  # Join the tables via relationship
+            .where(EsaStationData.datetime.in_(datetimes))
+            .group_by(EsaStation.city, EsaStationData.datetime)  # Group by city and datetime
+            .order_by(EsaStation.city, EsaStationData.datetime)
+        )
+
+        results = session.execute(query).all()
 
         session.close_all()
 
+        datetime_to_stations = defaultdict(list)
+        for datetime, avg_longitude, avg_latitude, value, city in results:
+            datetime_to_stations[datetime].append(
+                StationValue(np.float64(avg_longitude), np.float64(avg_latitude), np.float64(value), city)
+            )
+
+        sorted_map = sorted(
+            datetime_to_stations.items(),
+            key=lambda x: x[0],
+            reverse=True
+        )
+
+        return sorted_map
 
 class PM10Provider(ESAProvider):
 
@@ -354,7 +384,7 @@ class PM25Provider(ESAProvider):
         super().__init__(meteo_db_url, last)
 
     def provide_stations_by_datetimes(self, datetimes=None):
-        return super().provide_stations_by_datetimes(column="pm10", datetimes=datetimes)
+        return super().provide_stations_by_datetimes(column="pm25", datetimes=datetimes)
 
     def provide_frames_by_type_and_datetimes(self, datetimes = None):
         return super().provide_frames_by_type_and_datetimes("pm10", datetimes)

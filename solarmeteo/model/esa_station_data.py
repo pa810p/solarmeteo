@@ -19,6 +19,11 @@ class EsaStationData(Base):
 
 
     def __init__(self, esa_station_id, humidity, pressure, temperature, pm10, pm25, datetime):
+        if not esa_station_id:
+            raise Exception('no esa_station_id')
+        if not datetime:
+            raise Exception('no datetime')
+
         self.esa_station_id = esa_station_id
         self.humidity = humidity
         self.pressure = pressure
