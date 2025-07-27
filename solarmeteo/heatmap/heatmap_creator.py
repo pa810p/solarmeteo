@@ -118,11 +118,11 @@ class HeatmapCreator:
         # it uses absolute values for interpolation
         try:
             rbf = Rbf(x, y, temps_scaled, function='linear', smooth=1)
+            grid_temp_scaled = rbf(xx, yy)
         except Exception as e:
             logger.error(f"Interpolating heatmap exception {e} on datetime: {displaydate}")
             return None
 
-        grid_temp_scaled = rbf(xx, yy)
         if scale_min is not None and scale_max is not None:
             grid_temp = grid_temp_scaled * (scale_max - scale_min) + scale_min
         else:
