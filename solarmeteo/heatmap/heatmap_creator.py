@@ -397,11 +397,11 @@ class PM10Creator(HeatmapCreator):
     _COLORMAP = LinearSegmentedColormap.from_list(
         'pm10_cmap',
         [
-            (0.0, '#f7fbff'),   # Very light blue
-            (0.25, '#c6dbef'),  # Light blue
-            (0.5, '#6baed6'),   # Medium blue
-            (0.75, '#2171b5'),  # Deep blue
-            (1.0, '#08306b')    # Dark blue
+            (0.0,  '#f9f9f9'),  # Very light gray
+            (0.25, '#d3d3d3'),  # Light gray
+            (0.5,  '#9b9b9b'),  # Medium gray
+            (0.75, '#575757'),  # Deep gray
+            (1.0,  '#232323')   # Dark gray
         ]
     )
 
@@ -413,7 +413,7 @@ class PM10Creator(HeatmapCreator):
             stations=stations,
             colormap=self._COLORMAP,
             displaydate=displaydate,
-            vmin=0, vmax=50,
+            vmin=0, vmax=30,
             label="PM 10 (ppm)",
             scale_min=0, scale_max=50,
             display_labels=display_labels
@@ -424,11 +424,11 @@ class PM25Creator(HeatmapCreator):
     _COLORMAP = LinearSegmentedColormap.from_list(
         'pm25_cmap',
         [
-            (0.0, '#f7fbff'),   # Very light blue
-            (0.25, '#c6dbef'),  # Light blue
-            (0.5, '#6baed6'),   # Medium blue
-            (0.75, '#2171b5'),  # Deep blue
-            (1.0, '#08306b')    # Dark blue
+            (0.0,  '#fce4ec'),  # Very light claret
+            (0.25, '#f4a6b7'),  # Light claret
+            (0.5,  '#c05a6a'),  # Medium claret
+            (0.75, '#8b1c3a'),  # Deep claret
+            (1.0,  '#4a0d1f')   # Dark claret
         ]
     )
 
@@ -440,7 +440,7 @@ class PM25Creator(HeatmapCreator):
             stations=stations,
             colormap=self._COLORMAP,
             displaydate=displaydate,
-            vmin=0, vmax=50,
+            vmin=0, vmax=30,
             label="PM 2.5 (ppm)",
             scale_min=0, scale_max=50,
             display_labels=display_labels
