@@ -440,6 +440,6 @@ class PM25Provider(ESAProvider):
         return super().provide_stations_by_datetimes(column="pm25", datetimes=datetimes)
 
     def provide_frames_by_type_and_datetimes(self, datetimes = None):
-        return super().provide_frames_by_type_and_datetimes("pm10", datetimes)
+        return super().provide_frames_by_type_and_datetimes("pm25", datetimes)
 
 

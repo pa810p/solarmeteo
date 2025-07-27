@@ -422,7 +422,7 @@ class PM10Creator(HeatmapCreator):
 
 class PM25Creator(HeatmapCreator):
     _COLORMAP = LinearSegmentedColormap.from_list(
-        'pm10_cmap',
+        'pm25_cmap',
         [
             (0.0, '#f7fbff'),   # Very light blue
             (0.25, '#c6dbef'),  # Light blue
