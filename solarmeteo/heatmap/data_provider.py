@@ -8,7 +8,7 @@ from logging import getLogger
 
 import numpy as np
 
-from sqlalchemy import create_engine, select, func
+from sqlalchemy import create_engine, select, func, delete
 from sqlalchemy.orm import sessionmaker
 
 from solarmeteo.model import EsaStationData, EsaStation
@@ -66,8 +66,61 @@ class DataProvider:
         ).scalars().all()
 
         session.close()
-
         return latest_datetimes
+
+
+    def delete_older_than_datetimes(self, heatmap, keep_datetimes):
+        session = self.create_session()
+        try:
+            frame_type_id = session.execute(
+                select(FrameType.id)
+                .where(FrameType.name == heatmap)
+            ).scalar_one()
+
+            query = (
+                delete(Frame)
+                .where(Frame.datetime.not_in(keep_datetimes) &
+                       (Frame.type_id == frame_type_id))
+            )
+
+            result = session.execute(query)
+            session.commit()
+            return result.rowcount
+        except Exception as e:
+            session.rollback()
+            raise e
+        finally:
+            session.close()
+
+
+    def _delete_all_frames(self, heatmap):
+        logger.info("Delete all frames.")
+        session = self.create_session()
+        frame_type_id = session.execute(
+            select(FrameType.id)
+            .where(FrameType.name == heatmap)
+        ).scalar_one()
+
+        query = (delete(Frame)
+            .where(Frame.type_id == frame_type_id)
+        )
+
+        result = session.execute(query)
+        session.commit()
+        return result.rowcount
+
+
+    def delete_older_frames(self, heatmap, keep_frames):
+        if keep_frames == 0:
+            self._delete_all_frames(heatmap)
+        elif keep_frames > 0:
+            logger.debug(f"Keeping last {keep_frames} of {heatmap} frames")
+            datetimes = self.get_last_datetimes(keep_frames)
+            if len(datetimes) > 0:
+                return self.delete_older_than_datetimes(heatmap, datetimes)
+        else:
+            logger.debug("Keeping all frames.")
+            return -1
 
 
     def provide_stations_by_datetimes(self, column : str, datetimes : list) -> list:

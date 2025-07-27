@@ -45,7 +45,7 @@ def main():
     output_file = None
     max_workers = int(config['meteo']['max_workers'])
     last_hours = 1
-    keep_frames = 72
+    keep_frames = int(config['meteo']['keep_frames'])
     generate_frames = False
     generate_cache = False
     persist = False
@@ -91,6 +91,7 @@ def main():
     parser.add_option('--persist', dest='persist', help='persist frames in database', action='store_true')
     parser.add_option('--usedb', dest='usedb', help='use database persisted frames if available', action='store_true')
     parser.add_option("--gios-stations", dest="gios_stations", help="update gios stations database", action='store_true')
+    parser.add_option('--keep-frames', dest='keep_frames', help="keep latest frames after generating older will be removed", type=int)
 
     # option not in properties
     # TODO: check if default can be set if empty in here
@@ -177,6 +178,9 @@ def main():
     if options.gios_stations is not None and not '':
         gios_stations = options.gios_stations
 
+    if options.keep_frames is not None and not '':
+        keep_frames = options.keep_frames
+
     setup_logging(level=get_log_level(log_level), project_prefix="solarmeteo")
     logger = logging.getLogger("solarmeteo.*")
     logger.info(f"Starting Solarmeteo...")
@@ -243,13 +247,13 @@ def main():
 
         hm = HeatMap(meteo_db_url=meteo_db_url, last=last_hours, file_format=file_format,
                      output_file=output_file, heatmap_type=heatmap, max_workers=max_workers,
-                     persist=persist, usedb=usedb)
+                     persist=persist, usedb=usedb, keep_frames=keep_frames)
         hm.generate()
 
     if generate_cache:
         for frametype in HeatMap.heatmaps:
             hm = HeatMap(meteo_db_url=meteo_db_url, last=last_hours, heatmap_type=frametype, max_workers=max_workers,
-                         file_format='cache')
+                         file_format='cache', keep_frames=keep_frames)
             hm.generate()
 
     if gios_stations:

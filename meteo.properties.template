@@ -6,6 +6,9 @@
 environment = _dev
 loglevel = DEBUG
 
+max_workers = 2
+keep_frames = 72
+
 [meteo.database]
 username = meteo
 password =
@@ -41,3 +44,6 @@ height = 106
 [gios]
 url = https://api.gios.gov.pl/pjp-api/v1/rest
 max_delay_sec = 8
+
+[esa]
+url = https://public-esa.ose.gov.pl/api/v1/smog
