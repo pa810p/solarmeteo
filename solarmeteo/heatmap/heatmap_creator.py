@@ -413,7 +413,7 @@ class PM10Creator(HeatmapCreator):
             stations=stations,
             colormap=self._COLORMAP,
             displaydate=displaydate,
-            vmin=0, vmax=30,
+            vmin=0, vmax=40,
             label="PM 10 (ppm)",
             scale_min=0, scale_max=50,
             display_labels=display_labels
@@ -440,7 +440,7 @@ class PM25Creator(HeatmapCreator):
             stations=stations,
             colormap=self._COLORMAP,
             displaydate=displaydate,
-            vmin=0, vmax=30,
+            vmin=0, vmax=40,
             label="PM 2.5 (ppm)",
             scale_min=0, scale_max=50,
             display_labels=display_labels
