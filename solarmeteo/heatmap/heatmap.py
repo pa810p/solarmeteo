@@ -63,6 +63,7 @@ class HeatMap:
         overwrite (bool): Whether to overwrite existing files.
         usedb (bool): Whether to use the database for persistence.
         persist (bool): Whether to persist generated frames.
+        keep_frames (int): Number of last generated frames to be kept in database, older will be removed.
     """
 
     heatmaps = [
@@ -74,7 +75,7 @@ class HeatMap:
 
 
     def __init__(self, meteo_db_url, last=1, file_format='png', output_file='temperature.png', heatmap_type='temperature', max_workers=2,
-                 overwrite=True, usedb=False, persist=False):
+                 overwrite=True, usedb=False, persist=False, keep_frames=0):
         """
         Initialize the HeatMap object with configuration for data source, output, and processing.
 
@@ -88,6 +89,7 @@ class HeatMap:
             overwrite (bool): Overwrite existing files.
             usedb (bool): Use database for persistence.
             persist (bool): Persist generated frames.
+            keep_frames (int): Number of last generated frames to be kept in database, older will be removed
         """
         self.meteo_db_url = meteo_db_url
         self.last = last
@@ -98,14 +100,15 @@ class HeatMap:
         self.overwrite = overwrite
         self.usedb = usedb
         self.persist = persist
+        self.keep_frames = keep_frames
 
         self.dataprovider = ProviderFactory.provider(self.heatmap_type, self.meteo_db_url, self.last)
         self.heatmap_creator = CreatorFactory.creator(self.heatmap_type)
         logger.info(f"HeatMap initialized with type: {heatmap_type}, last: {last}, file_format: {file_format}, output_file: {output_file}, max_workers: {max_workers}," \
-                + f"overwrite: {overwrite}, usedb: {usedb}, persist: {persist}")
+                + f"overwrite: {overwrite}, usedb: {usedb}, persist: {persist}, keep_frames: {keep_frames}")
 
 
-    def _generate_frames_by_datetimes(self, date_times, persist=None ) -> dict:
+    def _generate_frames_by_datetimes(self, date_times, persist=None) -> dict:
         """
         Generates heatmap frames for the given list of date_times.
 
@@ -168,7 +171,7 @@ class HeatMap:
 
         imageio.mimsave(f"{self.output_file}", list(sorted_frames.values()), duration=300, palettesize=256, subrectangles=True)
         # imageio.mimsave("animation.mp4", sorted_frames, format="mp4", duration=0.2)  # Save as MP4# Duration per frame (sec)
-        logger.debug(f"{self.heatmap_type.capitalize()} heatmap generation completed at {datetime.now()}")
+        logger.info(f"{self.heatmap_type.capitalize()} heatmap generation completed at {datetime.now()}")
 
 
     def _generate_png(self):
@@ -185,7 +188,7 @@ class HeatMap:
         frames = self._generate_frames_by_datetimes(last_datetimes)
 
         imageio.imwrite(f"{self.output_file}", next(iter(frames.values())))
-        logger.debug(f"{self.heatmap_type.capitalize()} heatmap generation completed at {datetime.now()}")
+        logger.info(f"{self.heatmap_type.capitalize()} heatmap generation completed at {datetime.now()}")
 
 
     def _generate_cache(self):
@@ -243,7 +246,7 @@ class HeatMap:
             quality=85  # Adjust quality (0-100)
         )
 
-        logger.debug(f"{self.heatmap_type.capitalize()} heatmap generation completed at {datetime.now()}")
+        logger.info(f"{self.heatmap_type.capitalize()} heatmap generation completed at {datetime.now()}")
 
 
     def generate(self):
@@ -259,3 +262,7 @@ class HeatMap:
             case 'webp': self._generate_webp()
             case 'cache': self._generate_cache()
             case _: raise ValueError(f"Unsupported file format: {self.file_format}")
+
+        if self.keep_frames > 0:
+            removed = self.dataprovider.delete_older_frames(self.heatmap_type, self.keep_frames)
+            logger.info(f"Removed {removed} frames.")
