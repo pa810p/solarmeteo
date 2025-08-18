@@ -13,6 +13,7 @@ from matplotlib.colors import Normalize, LinearSegmentedColormap
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 
 from solarmeteo.heatmap.data_provider import StationValue
+from solarmeteo.heatmap.ranges import HUMIDITY_RANGES, PRESSURE_RANGES, TEMPERATURE_RANGES
 
 from logging import getLogger
 
@@ -283,16 +284,24 @@ class TemperatureCreator(HeatmapCreator):
         super().__init__()
 
     def generate(self, stations, displaydate, display_labels):
-        return self.generate_heatmap(stations=stations, colormap=self._COLORMAP, displaydate=displaydate,
-                                     vmin=-5, vmax=30, label="Temperature (°C)",
-                                     display_labels=display_labels)
+        return self.generate_heatmap(
+            stations=stations,
+            colormap=self._COLORMAP,
+            displaydate=displaydate,
+            vmin=TEMPERATURE_RANGES["vmin"],
+            vmax=TEMPERATURE_RANGES["vmax"],
+            label=TEMPERATURE_RANGES["label"],
+            scale_min=TEMPERATURE_RANGES["scale_min"],
+            scale_max=TEMPERATURE_RANGES["scale_max"],
+            display_labels=display_labels
+        )
 
 
 
 class PressureCreator(HeatmapCreator):
 
     _COLORMAP = LinearSegmentedColormap.from_list(
-        'temp_cmap',
+        'pressure_cmap',
         [
             (0.0, '#e0f8e0'),  # Very light green
             (0.25, '#a8e6a3'), # Light green
@@ -306,10 +315,16 @@ class PressureCreator(HeatmapCreator):
         super().__init__()
 
     def generate(self, stations, displaydate, display_labels):
-        return self.generate_heatmap(stations=stations, colormap=self._COLORMAP, displaydate=displaydate,
-                                     vmin=1000, vmax=1030, label="Pressure (hPa)",
-                                     scale_min=960, scale_max=1040,
-                                     display_labels=display_labels)
+        return self.generate_heatmap(
+            stations=stations,
+            colormap=self._COLORMAP,
+            displaydate=displaydate,
+            vmin=PRESSURE_RANGES["vmin"],
+            vmax=PRESSURE_RANGES["vmax"],
+            label=PRESSURE_RANGES["label"],
+            scale_min=PRESSURE_RANGES["scale_min"],
+            scale_max=PRESSURE_RANGES["scale_max"],
+            display_labels=display_labels)
 
 
 class HumidityCreator(HeatmapCreator):
@@ -332,9 +347,9 @@ class HumidityCreator(HeatmapCreator):
             stations=stations,
             colormap=self._COLORMAP,
             displaydate=displaydate,
-            vmin=0, vmax=100,
-            label="Humidity (%)",
-            scale_min=0, scale_max=100,
+            vmin=HUMIDITY_RANGES["vmin"], vmax=HUMIDITY_RANGES["vmax"],
+            label=HUMIDITY_RANGES["label"],
+            scale_min=HUMIDITY_RANGES["scale_min"], scale_max=HUMIDITY_RANGES["scale_max"],
             display_labels=display_labels
         )
 
@@ -443,5 +458,90 @@ class PM25Creator(HeatmapCreator):
             vmin=0, vmax=40,
             label="PM 2.5 (ppm)",
             scale_min=0, scale_max=50,
+            display_labels=display_labels
+        )
+
+
+class EsaTemperatureCreator(HeatmapCreator):
+    _COLORMAP = LinearSegmentedColormap.from_list(
+        'temp_cmap',
+        [
+            (0.0, '#8e44ad'),   # Violet (fixed)
+            (0.15, '#3498db'),  # Blue (denser)
+            (0.35, '#2ecc71'),  # Green (denser)
+            (0.6, '#f1c40f'),   # Yellow (denser)
+            (1.0, '#ff0000')    # Red (fixed)
+        ]
+    )
+
+    def __init__(self):
+        super().__init__()
+
+    def generate(self, stations, displaydate, display_labels):
+        return self.generate_heatmap(
+            stations=stations,
+            colormap=self._COLORMAP,
+            displaydate=displaydate,
+            vmin=TEMPERATURE_RANGES["vmin"],
+            vmax=TEMPERATURE_RANGES["vmax"],
+            label=TEMPERATURE_RANGES["label"],
+            scale_min=TEMPERATURE_RANGES["scale_min"],
+            scale_max=TEMPERATURE_RANGES["scale_max"],
+            display_labels=display_labels
+        )
+
+
+class EsaHumidityCreator(HeatmapCreator):
+    _COLORMAP = LinearSegmentedColormap.from_list(
+        'humidity_cmap',
+        [
+            (0.0, '#e0f7fa'),   # Light cyan
+            (0.25, '#81d4fa'),  # Light blue
+            (0.5, '#4fc3f7'),   # Medium blue
+            (0.75, '#0288d1'),  # Deep blue
+            (1.0, '#01579b')    # Dark blue
+        ]
+    )
+
+    def __init__(self):
+        super().__init__()
+
+    def generate(self, stations, displaydate, display_labels):
+        return self.generate_heatmap(
+            stations=stations,
+            colormap=self._COLORMAP,
+            displaydate=displaydate,
+            vmin=HUMIDITY_RANGES["vmin"], vmax=HUMIDITY_RANGES["vmax"],
+            label=HUMIDITY_RANGES["label"],
+            scale_min=HUMIDITY_RANGES["scale_min"], scale_max=HUMIDITY_RANGES["scale_max"],
+            display_labels=display_labels
+        )
+
+
+class EsaPressureCreator(HeatmapCreator):
+    _COLORMAP = LinearSegmentedColormap.from_list(
+        'pressure_cmap',
+        [
+            (0.0, '#8e44ad'),   # Violet (fixed)
+            (0.15, '#3498db'),  # Blue (denser)
+            (0.35, '#2ecc71'),  # Green (denser)
+            (0.6, '#f1c40f'),   # Yellow (denser)
+            (1.0, '#ff0000')    # Red (fixed)
+        ]
+    )
+
+    def __init__(self):
+        super().__init__()
+
+    def generate(self, stations, displaydate, display_labels):
+        return self.generate_heatmap(
+            stations=stations,
+            colormap=self._COLORMAP,
+            displaydate=displaydate,
+            vmin=PRESSURE_RANGES["vmin"],
+            vmax=PRESSURE_RANGES["vmax"],
+            label=PRESSURE_RANGES["label"],
+            scale_min=PRESSURE_RANGES["scale_min"],
+            scale_max=PRESSURE_RANGES["scale_max"],
             display_labels=display_labels
         )

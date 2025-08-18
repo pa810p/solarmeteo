@@ -443,3 +443,38 @@ class PM25Provider(ESAProvider):
         return super().provide_frames_by_type_and_datetimes("pm25", datetimes)
 
 
+class EsaTemperatureProvider(ESAProvider):
+
+    def __init__(self, meteo_db_url, last=1):
+        super().__init__(meteo_db_url, last)
+
+    def provide_stations_by_datetimes(self, datetimes=None):
+        return super().provide_stations_by_datetimes(column="temperature", datetimes=datetimes)
+
+    def provide_frames_by_type_and_datetimes(self, datetimes = None):
+        return super().provide_frames_by_type_and_datetimes("temperature", datetimes)
+
+
+class EsaHumidityProvider(ESAProvider):
+
+    def __init__(self, meteo_db_url, last=1):
+        super().__init__(meteo_db_url, last)
+
+    def provide_stations_by_datetimes(self, datetimes=None):
+        return super().provide_stations_by_datetimes(column="humidity", datetimes=datetimes)
+
+    def provide_frames_by_type_and_datetimes(self, datetimes = None):
+        return super().provide_frames_by_type_and_datetimes("humidity", datetimes)
+
+
+
+class EsaPressureProvider(ESAProvider):
+
+    def __init__(self, meteo_db_url, last=1):
+        super().__init__(meteo_db_url, last)
+
+    def provide_stations_by_datetimes(self, datetimes=None):
+        return super().provide_stations_by_datetimes(column="pressure", datetimes=datetimes)
+
+    def provide_frames_by_type_and_datetimes(self, datetimes = None):
+        return super().provide_frames_by_type_and_datetimes("pressure", datetimes)

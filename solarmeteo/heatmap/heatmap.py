@@ -1,9 +1,11 @@
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
-from solarmeteo.heatmap.data_provider import TemperatureProvider, PressureProvider, PrecipitationProvider, HumidityProvider, \
-    WindProvider, PM10Provider, PM25Provider
-from solarmeteo.heatmap.heatmap_creator import TemperatureCreator, PressureCreator, PrecipitationCreator, HumidityCreator, \
-    WindCreator, PM10Creator, PM25Creator
+from solarmeteo.heatmap.data_provider import TemperatureProvider, PressureProvider, PrecipitationProvider, \
+    HumidityProvider, \
+    WindProvider, PM10Provider, PM25Provider, EsaTemperatureProvider, EsaHumidityProvider, EsaPressureProvider
+from solarmeteo.heatmap.heatmap_creator import TemperatureCreator, PressureCreator, PrecipitationCreator, \
+    HumidityCreator, \
+    WindCreator, PM10Creator, PM25Creator, EsaTemperatureCreator, EsaHumidityCreator, EsaPressureCreator
 
 import imageio.v2 as imageio
 from datetime import datetime
@@ -24,6 +26,9 @@ class CreatorFactory:
             case 'wind': return WindCreator()
             case 'pm10': return PM10Creator()
             case 'pm25': return PM25Creator()
+            case 'esa_temperature': return EsaTemperatureCreator()
+            case 'esa_pressure': return EsaPressureCreator()
+            case 'esa_humidity': return EsaHumidityCreator()
             case _: return None
 
 
@@ -39,6 +44,9 @@ class ProviderFactory:
             case 'wind': return WindProvider(meteo_db_url, last)
             case 'pm25': return PM25Provider(meteo_db_url, last)
             case 'pm10': return PM10Provider(meteo_db_url, last)
+            case 'esa_temperature': return EsaTemperatureProvider(meteo_db_url, last)
+            case 'esa_pressure': return EsaPressureProvider(meteo_db_url, last)
+            case 'esa_humidity': return EsaHumidityProvider(meteo_db_url, last)
             case _: return None
 
 
@@ -67,7 +75,7 @@ class HeatMap:
     """
 
     heatmaps = [
-        "temperature", "pressure", "precipitation", "humidity", "wind"
+        "temperature", "pressure", "precipitation", "humidity", "wind", "pm25", "pm10", "esa_temp", "esa_pressure", "esa_humidity"
     ]
 
     display_labels = ['Kraków', 'Warszawa', 'Gdańsk', 'Wrocław', 'Szczecin', 'Poznań', 'Suwałki', 'Zakopane', 'Łódź',
