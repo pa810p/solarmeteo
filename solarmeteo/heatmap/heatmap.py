@@ -1,4 +1,6 @@
 from concurrent.futures import ProcessPoolExecutor, as_completed
+from collections import deque
+import numpy as np
 
 from solarmeteo.heatmap.data_provider import TemperatureProvider, PressureProvider, PrecipitationProvider, HumidityProvider, \
     WindProvider, PM10Provider, PM25Provider
@@ -9,8 +11,10 @@ import imageio.v2 as imageio
 from datetime import datetime
 from logging import getLogger
 from PIL import Image
+from decimal import Decimal
 
 logger = getLogger(__name__)
+
 
 class CreatorFactory:
 
@@ -66,6 +70,18 @@ class HeatMap:
         keep_frames (int): Number of last generated frames to be kept in database, older will be removed.
     """
 
+    # Configuration for heatmap types that support dynamic scaling.
+    # This makes it easy to add or configure other types in the future.
+    DYNAMIC_SCALE_CONFIG = {
+        'temperature': {'range': 15, 'history_size': 10},
+        'pressure': {'range': 15, 'history_size': 10},
+        'humidity': {'range': 25, 'history_size': 10},
+        'precipitation': {'range': 5, 'history_size': 10},
+        'wind': {'range': 8, 'history_size': 10},
+        'pm10': {'range': 20, 'history_size': 10},
+        'pm25': {'range': 20, 'history_size': 10},
+    }
+
     heatmaps = [
         "temperature", "pressure", "precipitation", "humidity", "wind"
     ]
@@ -101,9 +117,18 @@ class HeatMap:
         self.usedb = usedb
         self.persist = persist
         self.keep_frames = keep_frames
+        self._history = None
 
         self.dataprovider = ProviderFactory.provider(self.heatmap_type, self.meteo_db_url, self.last)
         self.heatmap_creator = CreatorFactory.creator(self.heatmap_type)
+
+        # Pre-load history if the heatmap type is configured for dynamic scaling.
+        if self.heatmap_type in self.DYNAMIC_SCALE_CONFIG and hasattr(self.dataprovider, 'get_historical_avg_temps'):
+            config = self.DYNAMIC_SCALE_CONFIG[self.heatmap_type]
+            history_size = config['history_size']
+            history = self.dataprovider.get_historical_avg_temps(history_size)
+            self._history = deque(history, maxlen=history_size)
+
         logger.info(f"HeatMap initialized with type: {heatmap_type}, last: {last}, file_format: {file_format}, output_file: {output_file}, max_workers: {max_workers}," \
                 + f"overwrite: {overwrite}, usedb: {usedb}, persist: {persist}, keep_frames: {keep_frames}")
 
@@ -124,18 +149,41 @@ class HeatMap:
 
         logger.debug("Generate frames")
         frames = dict()
-        stations = self.dataprovider.provide_stations_by_datetimes(datetimes=date_times)
+        stations_by_datetime = self.dataprovider.provide_stations_by_datetimes(datetimes=date_times)
 
         with ProcessPoolExecutor(max_workers=self.max_workers) as executor:
-            futures = [
-                executor.submit(self.heatmap_creator.generate_image, stations=stations, displaydate=displaydate, display_labels=self.display_labels)
-                for idx, (displaydate, stations) in enumerate(stations)
-            ]
+            futures = []
+            # Process frames in chronological order to ensure history is updated correctly
+            for displaydate, stations in sorted(stations_by_datetime, key=lambda x: x[0]):
+                kwargs = {
+                    'stations': stations,
+                    'displaydate': displaydate,
+                    'display_labels': self.display_labels
+                }
+                # If the heatmap type is configured for dynamic scaling, calculate and inject the scale.
+                if self.heatmap_type in self.DYNAMIC_SCALE_CONFIG and self._history is not None:
+                    values = np.array([s.value for s in stations])
+                    if values.size > 0:
+                        current_avg = Decimal(str(np.mean(values)))
+                        self._history.append(current_avg)
+                        smoothed_avg = np.mean(self._history)
+
+                        # Get the scaling range from the central configuration.
+                        scale_range = self.DYNAMIC_SCALE_CONFIG[self.heatmap_type]['range']
+
+                        # Set scale based on smoothed average and the configured range.
+                        kwargs['vmin'] = round(smoothed_avg - scale_range)
+                        kwargs['vmax'] = round(smoothed_avg + scale_range)
+                        kwargs['scale_min'] = kwargs['vmin'] - 5
+                        kwargs['scale_max'] = kwargs['vmax'] + 5
+
+                future = executor.submit(self.heatmap_creator.generate_image, **kwargs)
+                futures.append(future)
 
             for future in as_completed(futures):
                 (datetime, frame) = future.result()
                 if frame is not None:
-                    frames [datetime] = frame
+                    frames[datetime] = frame
 
         if persist:
             self.dataprovider.store_frames(self.heatmap_type, frames)

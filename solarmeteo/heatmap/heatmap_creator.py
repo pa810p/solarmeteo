@@ -248,9 +248,9 @@ class HeatmapCreator:
         return fig
 
 
-    def generate_image(self, stations, displaydate, display_labels):
+    def generate_image(self, stations, displaydate, display_labels, **kwargs):
         logger.debug(f"Generate image for: {displaydate}")
-        fig = self.generate(stations=stations, displaydate=displaydate, display_labels=display_labels)
+        fig = self.generate(stations=stations, displaydate=displaydate, display_labels=display_labels, **kwargs)
         if fig is not None:
             try:
                 canvas = FigureCanvasAgg(fig)
@@ -282,11 +282,24 @@ class TemperatureCreator(HeatmapCreator):
     def __init__(self):
         super().__init__()
 
-    def generate(self, stations, displaydate, display_labels):
-        return self.generate_heatmap(stations=stations, colormap=self._COLORMAP, displaydate=displaydate,
-                                     vmin=-5, vmax=30, label="Temperature (°C)",
-                                     display_labels=display_labels)
+    def generate(self, stations, displaydate, display_labels, **kwargs):
+        # Use provided scale from kwargs, or fall back to the original defaults
+        vmin = kwargs.get('vmin', -5)
+        vmax = kwargs.get('vmax', 30)
+        scale_min = kwargs.get('scale_min')
+        scale_max = kwargs.get('scale_max')
 
+        return self.generate_heatmap(
+            stations=stations,
+            colormap=self._COLORMAP,
+            displaydate=displaydate,
+            vmin=vmin,
+            vmax=vmax,
+            label="Temperature (°C)",
+            scale_min=scale_min,
+            scale_max=scale_max,
+            display_labels=display_labels
+        )
 
 
 class PressureCreator(HeatmapCreator):
@@ -305,10 +318,14 @@ class PressureCreator(HeatmapCreator):
     def __init__(self):
         super().__init__()
 
-    def generate(self, stations, displaydate, display_labels):
+    def generate(self, stations, displaydate, display_labels, **kwargs):
+        vmin = kwargs.get('vmin', 1000)
+        vmax = kwargs.get('vmax', 1030)
+        scale_min = kwargs.get('scale_min', 960)
+        scale_max = kwargs.get('scale_max', 1040)
         return self.generate_heatmap(stations=stations, colormap=self._COLORMAP, displaydate=displaydate,
-                                     vmin=1000, vmax=1030, label="Pressure (hPa)",
-                                     scale_min=960, scale_max=1040,
+                                     vmin=vmin, vmax=vmax, label="Pressure (hPa)",
+                                     scale_min=scale_min, scale_max=scale_max,
                                      display_labels=display_labels)
 
 
@@ -327,14 +344,18 @@ class HumidityCreator(HeatmapCreator):
     def __init__(self):
         super().__init__()
 
-    def generate(self, stations, displaydate, display_labels):
+    def generate(self, stations, displaydate, display_labels, **kwargs):
+        vmin = kwargs.get('vmin', 0)
+        vmax = kwargs.get('vmax', 100)
+        scale_min = kwargs.get('scale_min', 0)
+        scale_max = kwargs.get('scale_max', 100)
         return self.generate_heatmap(
             stations=stations,
             colormap=self._COLORMAP,
             displaydate=displaydate,
-            vmin=0, vmax=100,
+            vmin=vmin, vmax=vmax,
             label="Humidity (%)",
-            scale_min=0, scale_max=100,
+            scale_min=scale_min, scale_max=scale_max,
             display_labels=display_labels
         )
 
@@ -354,14 +375,18 @@ class WindCreator(HeatmapCreator):
     def __init__(self):
         super().__init__()
 
-    def generate(self, stations, displaydate, display_labels):
+    def generate(self, stations, displaydate, display_labels, **kwargs):
+        vmin = kwargs.get('vmin', 0)
+        vmax = kwargs.get('vmax', 15)
+        scale_min = kwargs.get('scale_min', 0)
+        scale_max = kwargs.get('scale_max', 15)
         return self.generate_heatmap(
             stations=stations,
             colormap=self._COLORMAP,
             displaydate=displaydate,
-            vmin=0, vmax=15,
+            vmin=vmin, vmax=vmax,
             label="Wind (m/s)",
-            scale_min=0, scale_max=15,
+            scale_min=scale_min, scale_max=scale_max,
             display_labels=display_labels
         )
 
@@ -381,14 +406,18 @@ class PrecipitationCreator(HeatmapCreator):
     def __init__(self):
         super().__init__()
 
-    def generate(self, stations, displaydate, display_labels):
+    def generate(self, stations, displaydate, display_labels, **kwargs):
+        vmin = kwargs.get('vmin', 0)
+        vmax = kwargs.get('vmax', 10)
+        scale_min = kwargs.get('scale_min', 0)
+        scale_max = kwargs.get('scale_max', 10)
         return self.generate_heatmap(
             stations=stations,
             colormap=self._COLORMAP,
             displaydate=displaydate,
-            vmin=0, vmax=10,
+            vmin=vmin, vmax=vmax,
             label="Precipitation (mm)",
-            scale_min=0, scale_max=10,
+            scale_min=scale_min, scale_max=scale_max,
             display_labels=display_labels
         )
 
@@ -408,14 +437,18 @@ class PM10Creator(HeatmapCreator):
     def __init__(self):
         super().__init__()
 
-    def generate(self, stations, displaydate, display_labels):
+    def generate(self, stations, displaydate, display_labels, **kwargs):
+        vmin = kwargs.get('vmin', 0)
+        vmax = kwargs.get('vmax', 40)
+        scale_min = kwargs.get('scale_min', 0)
+        scale_max = kwargs.get('scale_max', 50)
         return self.generate_heatmap(
             stations=stations,
             colormap=self._COLORMAP,
             displaydate=displaydate,
-            vmin=0, vmax=40,
+            vmin=vmin, vmax=vmax,
             label="PM 10 (ppm)",
-            scale_min=0, scale_max=50,
+            scale_min=scale_min, scale_max=scale_max,
             display_labels=display_labels
         )
 
@@ -435,13 +468,18 @@ class PM25Creator(HeatmapCreator):
     def __init__(self):
         super().__init__()
 
-    def generate(self, stations, displaydate, display_labels):
+    def generate(self, stations, displaydate, display_labels, **kwargs):
+        vmin = kwargs.get('vmin', 0)
+        vmax = kwargs.get('vmax', 40)
+        scale_min = kwargs.get('scale_min', 0)
+        scale_max = kwargs.get('scale_max', 50)
         return self.generate_heatmap(
             stations=stations,
             colormap=self._COLORMAP,
             displaydate=displaydate,
-            vmin=0, vmax=40,
+            vmin=vmin, vmax=vmax,
             label="PM 2.5 (ppm)",
-            scale_min=0, scale_max=50,
+            scale_min=scale_min, scale_max=scale_max,
             display_labels=display_labels
         )
+

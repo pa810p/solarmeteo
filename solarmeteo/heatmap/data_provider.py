@@ -40,6 +40,41 @@ class DataProvider:
         self.until_time = until_time
 
 
+    def get_historical_avg_temps(self, column, count):
+        """
+        Retrieves the average value for a given column for the last 'count' measurements.
+        """
+        session = self.create_session()
+        try:
+            # Get the most recent 'count' distinct datetimes
+            latest_datetimes = session.execute(
+                select(StationData.datetime)
+                .distinct()
+                .order_by(StationData.datetime.desc())
+                .limit(count)
+            ).scalars().all()
+
+            if not latest_datetimes:
+                return []
+
+            data_column = getattr(StationData, column)
+
+            # Calculate the average value for each of those datetimes
+            results = session.execute(
+                select(
+                    StationData.datetime,
+                    func.avg(data_column).label("avg_value")
+                )
+                .where(StationData.datetime.in_(latest_datetimes))
+                .group_by(StationData.datetime)
+                .order_by(StationData.datetime.asc())
+            ).all()
+
+            return [row.avg_value for row in results if row.avg_value is not None]
+        finally:
+            session.close()
+
+
     def create_connection(self):
         """
         Creates connection to database
@@ -263,6 +298,8 @@ class TemperatureProvider(DataProvider):
     def __init__(self, meteo_db_url, last=1):
         super().__init__(meteo_db_url, last)
 
+    def get_historical_avg_temps(self, count):
+        return super().get_historical_avg_temps('temperature', count)
 
     def provide_stations_by_datetimes(self, datetimes=None):
         return super().provide_stations_by_datetimes(column="temperature", datetimes=datetimes)
@@ -276,6 +313,8 @@ class PressureProvider(DataProvider):
     def __init__(self, meteo_db_url, last=1):
         super().__init__(meteo_db_url, last)
 
+    def get_historical_avg_temps(self, count):
+        return super().get_historical_avg_temps('pressure', count)
 
     def provide_stations_by_datetimes(self, datetimes=None):
         return super().provide_stations_by_datetimes(column="pressure", datetimes=datetimes)
@@ -289,6 +328,9 @@ class HumidityProvider(DataProvider):
     def __init__(self, meteo_db_url, last=1):
         super().__init__(meteo_db_url, last)
 
+    def get_historical_avg_temps(self, count):
+        return super().get_historical_avg_temps('humidity', count)
+
     def provide_stations_by_datetimes(self, datetimes=None):
         return super().provide_stations_by_datetimes(column="humidity", datetimes=datetimes)
 
@@ -301,6 +343,9 @@ class  PrecipitationProvider(DataProvider):
     def __init__(self, meteo_db_url, last=1):
         super().__init__(meteo_db_url, last)
 
+    def get_historical_avg_temps(self, count):
+        return super().get_historical_avg_temps('precipitation', count)
+
     def provide_stations_by_datetimes(self, datetimes=None):
         return super().provide_stations_by_datetimes(column="precipitation", datetimes=datetimes)
 
@@ -312,6 +357,9 @@ class WindProvider(DataProvider):
 
     def __init__(self, meteo_db_url, last=1):
         super().__init__(meteo_db_url, last)
+
+    def get_historical_avg_temps(self, count):
+        return super().get_historical_avg_temps('wind_speed', count)
 
     def provide(self, column="wind_speed"):
         return super().provide(column)
@@ -382,6 +430,35 @@ class ESAProvider(DataProvider):
 
         return latest_datetimes
 
+    def get_historical_avg_temps(self, column, count):
+        session = self.create_session()
+        try:
+            latest_datetimes = session.execute(
+                select(EsaStationData.datetime)
+                .distinct()
+                .order_by(EsaStationData.datetime.desc())
+                .limit(count)
+            ).scalars().all()
+
+            if not latest_datetimes:
+                return []
+
+            data_column = getattr(EsaStationData, column)
+
+            results = session.execute(
+                select(
+                    EsaStationData.datetime,
+                    func.avg(data_column).label("avg_value")
+                )
+                .where(EsaStationData.datetime.in_(latest_datetimes))
+                .group_by(EsaStationData.datetime)
+                .order_by(EsaStationData.datetime.asc())
+            ).all()
+
+            return [row.avg_value for row in results if row.avg_value is not None]
+        finally:
+            session.close()
+
     def provide_stations_by_datetimes(self, column, datetimes):
         session = self.create_session()
 
@@ -424,6 +501,9 @@ class PM10Provider(ESAProvider):
     def __init__(self, meteo_db_url, last=1):
         super().__init__(meteo_db_url, last)
 
+    def get_historical_avg_temps(self, count):
+        return super().get_historical_avg_temps('pm10', count)
+
     def provide_stations_by_datetimes(self, datetimes=None):
         return super().provide_stations_by_datetimes(column="pm10", datetimes=datetimes)
 
@@ -435,6 +515,9 @@ class PM25Provider(ESAProvider):
 
     def __init__(self, meteo_db_url, last=1):
         super().__init__(meteo_db_url, last)
+
+    def get_historical_avg_temps(self, count):
+        return super().get_historical_avg_temps('pm25', count)
 
     def provide_stations_by_datetimes(self, datetimes=None):
         return super().provide_stations_by_datetimes(column="pm25", datetimes=datetimes)
