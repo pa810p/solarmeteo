@@ -54,6 +54,7 @@ def main():
     gios_stations = False
     gios_max_delay_sec = int(config['gios']['max_delay_sec'])
     esa_url = config['esa']['url']
+    dynamic_scale = False;
 
     # and now overwrite them with command line if exists
     parser = optparse.OptionParser(usage="%prog [-b] [-m] [-i] [-f] [-l] [-o]", version=ver, description=desc)
@@ -92,6 +93,8 @@ def main():
     parser.add_option('--usedb', dest='usedb', help='use database persisted frames if available', action='store_true')
     parser.add_option("--gios-stations", dest="gios_stations", help="update gios stations database", action='store_true')
     parser.add_option('--keep-frames', dest='keep_frames', help="keep latest frames after generating older will be removed", type=int)
+    parser.add_option('--dynamic-scale', desc='dynamic_scale', help="scale on generated heatmap frames will be scaled depending on last data range average", action='store_true')
+    parser.add_option('--dynamic-scale-avg-history', dest='dynamic_scale_avg_history', help="number of historic data to calculate average for dynamic range", default=10, type=int)
 
     # option not in properties
     # TODO: check if default can be set if empty in here
