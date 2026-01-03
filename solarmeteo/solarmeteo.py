@@ -8,6 +8,7 @@
 import configparser
 import logging
 import optparse
+import re
 
 from solarmeteo.heatmap.heatmap import HeatMap
 from solarmeteo.logger.logs import get_log_level, setup_logging
@@ -15,6 +16,39 @@ from solarmeteo.updater.esa_updater import EsaUpdater
 from solarmeteo.updater.gios_updater import GiosUpdater
 from solarmeteo.updater.meteo_updater import MeteoUpdater
 from solarmeteo.updater.solar_updater import SolarUpdater
+
+
+_HEATMAP_RANGE_KEYS = (
+    "temperature",
+    "pressure",
+    "humidity",
+    "wind",
+    "precipitation",
+    "pm10",
+    "pm25",
+)
+
+
+def _parse_range_value(raw: str):
+    """Parse dash-separated numeric range like 0-100 and return tuple or None."""
+    if not raw:
+        return None
+    match = re.match(r"^\s*([+-]?\d+(?:\.\d+)?)\s*[-–]\s*([+-]?\d+(?:\.\d+)?)\s*$", raw)
+    if not match:
+        return None
+    return float(match.group(1)), float(match.group(2))
+
+
+def _load_heatmap_ranges(config: configparser.ConfigParser) -> dict:
+    """Load well-known heatmap ranges from meteo.properties [heatmap] section."""
+    ranges = {}
+    for key in _HEATMAP_RANGE_KEYS:
+        option = f"{key}_range"
+        raw = config.get('heatmap', option, fallback=None)
+        parsed = _parse_range_value(raw)
+        if parsed is not None:
+            ranges[key] = parsed
+    return ranges
 
 
 def main():
@@ -203,6 +237,9 @@ def main():
     # else:
 
     # TODO: should be a list imgw, solar, something, all
+    # Load optional ranges from well-known keys inside [heatmap] section
+    ranges = _load_heatmap_ranges(config)
+
     if update == 'all' or update == 'imgw':
         imgw_updater = MeteoUpdater(
             meteo_db_url=meteo_db_url,
@@ -214,10 +251,8 @@ def main():
 
         if generate_frames:
             for frametype in HeatMap.heatmaps:
-                hm = HeatMap(meteo_db_url=meteo_db_url, last=1, heatmap_type=frametype, max_workers=max_workers)
+                hm = HeatMap(meteo_db_url=meteo_db_url, last=1, heatmap_type=frametype, max_workers=max_workers, ranges=ranges)
                 hm.persist_frame()
-
-    if update == 'all' or update == 'solar':
         solar_updater = SolarUpdater(
             meteo_db_url=meteo_db_url,
             data_url=solar_url,
@@ -246,14 +281,13 @@ def main():
             output_file = heatmap
 
         hm = HeatMap(meteo_db_url=meteo_db_url, last=last_hours, file_format=file_format,
-                     output_file=output_file, heatmap_type=heatmap, max_workers=max_workers,
-                     persist=persist, usedb=usedb, keep_frames=keep_frames)
+                 output_file=output_file, heatmap_type=heatmap, max_workers=max_workers,
+                 persist=persist, usedb=usedb, keep_frames=keep_frames, ranges=ranges)
         hm.generate()
-
     if generate_cache:
         for frametype in HeatMap.heatmaps:
             hm = HeatMap(meteo_db_url=meteo_db_url, last=last_hours, heatmap_type=frametype, max_workers=max_workers,
-                         file_format='cache', keep_frames=keep_frames)
+                         file_format='cache', keep_frames=keep_frames, ranges=ranges)
             hm.generate()
 
     if gios_stations:

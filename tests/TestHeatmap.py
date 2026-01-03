@@ -14,6 +14,17 @@ from solarmeteo.heatmap.heatmap import HeatMap
 from tests.SolarMeteoTestConfig import SolarMeteoTestConfig
 
 
+DEFAULT_HEATMAP_RANGES = {
+    'temperature': (-5, 30),
+    'pressure': (1000, 1030),
+    'humidity': (0, 100),
+    'wind': (0, 15),
+    'precipitation': (0, 10),
+    'pm10': (0, 40),
+    'pm25': (0, 40),
+}
+
+
 class TestHeatMap(unittest.TestCase):
 
 
@@ -51,7 +62,14 @@ class TestHeatMap(unittest.TestCase):
         self.prepare_database()
 
         # when
-        hm = HeatMap(meteo_db_url=self.meteo_db_url, last=2, heatmap_type='temperature', max_workers=1, file_format='cache')
+        hm = HeatMap(
+            meteo_db_url=self.meteo_db_url,
+            last=2,
+            heatmap_type='temperature',
+            max_workers=1,
+            file_format='cache',
+            ranges=DEFAULT_HEATMAP_RANGES,
+        )
         hm.generate()
 
         # then
@@ -68,9 +86,17 @@ class TestHeatMap(unittest.TestCase):
         output_filepath = self.test_dir+'/temperature.png'
 
         # when
-        hm = HeatMap(meteo_db_url=self.meteo_db_url, last=1, heatmap_type='temperature', max_workers=1,
-                     output_file=output_filepath, file_format='png',
-                     usedb=False, persist=False)
+        hm = HeatMap(
+            meteo_db_url=self.meteo_db_url,
+            last=1,
+            heatmap_type='temperature',
+            max_workers=1,
+            output_file=output_filepath,
+            file_format='png',
+            usedb=False,
+            persist=False,
+            ranges=DEFAULT_HEATMAP_RANGES,
+        )
         hm.generate()
         frames = hm.dataprovider.provide_frames_by_type_and_datetimes(datetimes=['2025-06-23 17:00:00', '2025-06-23 18:00:00'])
 
@@ -86,9 +112,17 @@ class TestHeatMap(unittest.TestCase):
         output_filepath = self.test_dir+'/temperature.png'
 
         # when
-        hm = HeatMap(meteo_db_url=self.meteo_db_url, last=1, heatmap_type='temperature', max_workers=1,
-                     output_file=output_filepath, file_format='png',
-                     usedb=False, persist=True)
+        hm = HeatMap(
+            meteo_db_url=self.meteo_db_url,
+            last=1,
+            heatmap_type='temperature',
+            max_workers=1,
+            output_file=output_filepath,
+            file_format='png',
+            usedb=False,
+            persist=True,
+            ranges=DEFAULT_HEATMAP_RANGES,
+        )
         hm.generate()
         frames = hm.dataprovider.provide_frames_by_type_and_datetimes(datetimes=['2025-06-23 17:00:00', '2025-06-23 18:00:00'])
 
@@ -104,9 +138,17 @@ class TestHeatMap(unittest.TestCase):
         output_filepath = self.test_dir+'/pressure.gif'
 
         # when
-        hm = HeatMap(meteo_db_url=self.meteo_db_url, last=2, heatmap_type='pressure', max_workers=2,
-             output_file=output_filepath, file_format='gif',
-             usedb=False, persist=True)
+        hm = HeatMap(
+            meteo_db_url=self.meteo_db_url,
+            last=2,
+            heatmap_type='pressure',
+            max_workers=2,
+            output_file=output_filepath,
+            file_format='gif',
+            usedb=False,
+            persist=True,
+            ranges=DEFAULT_HEATMAP_RANGES,
+        )
         hm.generate()
         frames = hm.dataprovider.provide_frames_by_type_and_datetimes(datetimes=['2025-06-23 17:00:00', '2025-06-23 18:00:00'])
 
@@ -125,8 +167,17 @@ class TestHeatMap(unittest.TestCase):
         output_filepath2 = self.test_dir+'/humidity2.webp'
 
         # when
-        hm = HeatMap(meteo_db_url=self.meteo_db_url, last=2, heatmap_type='humidity', max_workers=2, file_format='webp',
-                     usedb=False, persist=True, output_file=output_filepath1)
+        hm = HeatMap(
+            meteo_db_url=self.meteo_db_url,
+            last=2,
+            heatmap_type='humidity',
+            max_workers=2,
+            file_format='webp',
+            usedb=False,
+            persist=True,
+            output_file=output_filepath1,
+            ranges=DEFAULT_HEATMAP_RANGES,
+        )
         hm.generate()
         frames = hm.dataprovider.provide_frames_by_type_and_datetimes(datetimes=['2025-06-23 17:00:00', '2025-06-23 18:00:00'])
 

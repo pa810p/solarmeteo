@@ -47,3 +47,15 @@ max_delay_sec = 8
 
 [esa]
 url = https://public-esa.ose.gov.pl/api/v1/smog
+
+# Optional heatmap ranges (min-max). Put values as double dash separated ranges, e.g. -5-30
+# Keys recognized: temperature_range, pressure_range, humidity_range, wind_range,
+# precipitation_range, pm10_range, pm25_range
+[heatmap]
+temperature_range = -5-30
+pressure_range = 960-1040
+humidity_range = 0-100
+wind_range = 0-15
+precipitation_range = 0-10
+pm10_range = 0-40
+pm25_range = 0-40
