@@ -75,7 +75,7 @@ class HeatMap:
 
 
     def __init__(self, meteo_db_url, last=1, file_format='png', output_file='temperature.png', heatmap_type='temperature', max_workers=2,
-                 overwrite=True, usedb=False, persist=False, keep_frames=0):
+                 overwrite=True, usedb=False, persist=False, keep_frames=0, ranges: dict | None = None):
         """
         Initialize the HeatMap object with configuration for data source, output, and processing.
 
@@ -104,6 +104,8 @@ class HeatMap:
 
         self.dataprovider = ProviderFactory.provider(self.heatmap_type, self.meteo_db_url, self.last)
         self.heatmap_creator = CreatorFactory.creator(self.heatmap_type)
+        # ranges is a mapping like {'temperature': (min, max), 'pressure': (min, max), ...}
+        self.ranges = ranges or {}
         logger.info(f"HeatMap initialized with type: {heatmap_type}, last: {last}, file_format: {file_format}, output_file: {output_file}, max_workers: {max_workers}," \
                 + f"overwrite: {overwrite}, usedb: {usedb}, persist: {persist}, keep_frames: {keep_frames}")
 
@@ -127,8 +129,21 @@ class HeatMap:
         stations = self.dataprovider.provide_stations_by_datetimes(datetimes=date_times)
 
         with ProcessPoolExecutor(max_workers=self.max_workers) as executor:
+            # determine vmin/vmax for this heatmap type (centralized ranges passed from main)
+            type_range = self.ranges.get(self.heatmap_type)
+            if type_range is not None and len(type_range) >= 2:
+                vmin, vmax = type_range[0], type_range[1]
+            else:
+                vmin, vmax = None, None
+
             futures = [
-                executor.submit(self.heatmap_creator.generate_image, stations=stations, displaydate=displaydate, display_labels=self.display_labels)
+                executor.submit(
+                    self.heatmap_creator.generate_image,
+                    stations=stations,
+                    displaydate=displaydate,
+                    display_labels=self.display_labels,
+                    vmin=vmin, vmax=vmax
+                )
                 for idx, (displaydate, stations) in enumerate(stations)
             ]
 
