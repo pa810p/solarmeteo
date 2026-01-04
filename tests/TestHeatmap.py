@@ -11,6 +11,7 @@ from solarmeteo.updater.meteo_updater import MeteoUpdater
 from tests import StationCommon
 
 from solarmeteo.heatmap.heatmap import HeatMap
+from solarmeteo.heatmap.data_provider import DataProvider, TemperatureProvider
 from tests.SolarMeteoTestConfig import SolarMeteoTestConfig
 
 
@@ -196,6 +197,109 @@ class TestHeatMap(unittest.TestCase):
         img = iio.imread(output_filepath2)
         self.assertIsInstance(img, np.ndarray)
         self.assertEqual(2, self.count_frames(output_filepath1))
+
+
+    def test_store_frames_overwrites_existing_entries(self):
+        # given
+        self.testconfig.init_complete_database()
+        provider = TemperatureProvider(self.meteo_db_url, last=1)
+        frame_datetime = datetime.datetime(2025, 1, 1, 12, 0, 0)
+        first_frame = np.zeros((4, 4), dtype=np.uint8)
+        updated_frame = np.full((4, 4), 255, dtype=np.uint8)
+
+        # when - store initial frame
+        provider.store_frames('temperature', {frame_datetime: first_frame})
+        stored_once = provider.provide_frames_by_type_and_datetimes(datetimes=[frame_datetime])
+        self.assertTrue(np.array_equal(stored_once[frame_datetime], first_frame))
+
+        # when - store updated frame for same datetime
+        provider.store_frames('temperature', {frame_datetime: updated_frame})
+
+        # then - retrieved frame reflects updated data (overwrite succeeded)
+        stored_twice = provider.provide_frames_by_type_and_datetimes(datetimes=[frame_datetime])
+        self.assertTrue(np.array_equal(stored_twice[frame_datetime], updated_frame))
+
+
+    def test_store_frames_creates_new_frame_type(self):
+        # given
+        self.testconfig.init_complete_database()
+        provider = DataProvider(self.meteo_db_url, last=1)
+        heatmap_name = 'custom_heatmap'
+        frame_datetime = datetime.datetime(2025, 1, 2, 9, 0, 0)
+        frame = np.full((3, 3), 7, dtype=np.uint8)
+
+        # when - storing against a previously unknown heatmap
+        provider.store_frames(heatmap_name, {frame_datetime: frame})
+
+        # then - frame can be retrieved which implies FrameType was auto-created
+        stored = provider.provide_frames_by_type_and_datetimes(heatmap=heatmap_name, datetimes=[frame_datetime])
+        self.assertIn(frame_datetime, stored)
+        self.assertTrue(np.array_equal(stored[frame_datetime], frame))
+
+
+    def test_delete_older_than_datetimes_removes_nonlisted(self):
+        # given
+        self.testconfig.init_complete_database()
+        provider = TemperatureProvider(self.meteo_db_url, last=1)
+        datetimes = [
+            datetime.datetime(2025, 1, 1, 12, 0, 0),
+            datetime.datetime(2025, 1, 1, 13, 0, 0),
+            datetime.datetime(2025, 1, 1, 14, 0, 0),
+        ]
+        frames = {dt: np.full((2, 2), idx, dtype=np.uint8) for idx, dt in enumerate(datetimes)}
+        provider.store_frames('temperature', frames)
+
+        # when
+        removed = provider.delete_older_than_datetimes('temperature', [datetimes[1], datetimes[2]])
+
+        # then
+        self.assertEqual(1, removed)
+        remaining = provider.provide_frames_by_type_and_datetimes(datetimes=datetimes)
+        self.assertNotIn(datetimes[0], remaining)
+        self.assertIn(datetimes[1], remaining)
+        self.assertIn(datetimes[2], remaining)
+
+
+    def test_delete_older_frames_keeps_latest_entries(self):
+        # given
+        self.prepare_database()
+        provider = TemperatureProvider(self.meteo_db_url, last=1)
+        datetimes = provider.get_last_datetimes(2)
+        self.assertGreaterEqual(len(datetimes), 2)
+        frames = {dt: np.full((3, 3), idx, dtype=np.uint8) for idx, dt in enumerate(datetimes)}
+        provider.store_frames('temperature', frames)
+
+        # when
+        removed = provider.delete_older_frames('temperature', keep_frames=1)
+
+        # then
+        self.assertGreaterEqual(removed, 1)
+        remaining = provider.provide_frames_by_type_and_datetimes(datetimes=datetimes)
+        # delete_older_frames should keep the most recent datetime only
+        latest_datetime = datetimes[0]
+        older_datetime = datetimes[1]
+        self.assertIn(latest_datetime, remaining)
+        self.assertNotIn(older_datetime, remaining)
+
+
+    def test_delete_older_frames_deletes_all_when_zero(self):
+        # given
+        self.testconfig.init_complete_database()
+        provider = TemperatureProvider(self.meteo_db_url, last=1)
+        datetimes = [
+            datetime.datetime(2025, 1, 2, 10, 0, 0),
+            datetime.datetime(2025, 1, 2, 11, 0, 0),
+        ]
+        frames = {dt: np.full((2, 2), idx, dtype=np.uint8) for idx, dt in enumerate(datetimes)}
+        provider.store_frames('temperature', frames)
+
+        # when
+        removed = provider.delete_older_frames('temperature', keep_frames=0)
+
+        # then
+        self.assertEqual(len(datetimes), removed)
+        remaining = provider.provide_frames_by_type_and_datetimes(datetimes=datetimes)
+        self.assertEqual({}, remaining)
 
 
     @classmethod

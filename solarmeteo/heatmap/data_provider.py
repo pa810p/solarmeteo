@@ -112,7 +112,7 @@ class DataProvider:
 
     def delete_older_frames(self, heatmap, keep_frames):
         if keep_frames == 0:
-            self._delete_all_frames(heatmap)
+            return self._delete_all_frames(heatmap)
         elif keep_frames > 0:
             logger.debug(f"Keeping last {keep_frames} of {heatmap} frames")
             datetimes = self.get_last_datetimes(keep_frames)
@@ -242,17 +242,41 @@ class DataProvider:
             session.add(frame_type)
             session.flush()  # Generate ID for new type
 
-        for key in frames:
-            frame = frames[key]
-            assert isinstance(frame, np.ndarray)
-            new_frame = Frame(
-                type_id=frame_type.id,
-                datetime=key,
-                body=base64.b64encode(zlib.compress(frame.tobytes())).decode('utf-8'),
-                dtype=str(frame.dtype),
-                shape=','.join(map(str, frame.shape))
+        target_datetimes = list(frames.keys())
+        existing_frames = {}
+        if target_datetimes:
+            rows = (
+                session.query(Frame)
+                .filter(
+                    Frame.type_id == frame_type.id,
+                    Frame.datetime.in_(target_datetimes)
+                )
+                .all()
             )
-            session.add(new_frame)
+            existing_frames = {row.datetime: row for row in rows}
+
+        for key, frame in frames.items():
+            assert isinstance(frame, np.ndarray)
+
+            encoded_body = base64.b64encode(zlib.compress(frame.tobytes())).decode('utf-8')
+            dtype = str(frame.dtype)
+            shape = ','.join(map(str, frame.shape))
+
+            if key in existing_frames:
+                logger.debug("Overwriting existing frame for %s", key)
+                existing = existing_frames[key]
+                existing.body = encoded_body
+                existing.dtype = dtype
+                existing.shape = shape
+            else:
+                new_frame = Frame(
+                    type_id=frame_type.id,
+                    datetime=key,
+                    body=encoded_body,
+                    dtype=dtype,
+                    shape=shape
+                )
+                session.add(new_frame)
 
         session.commit()
         session.close()

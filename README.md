@@ -209,7 +209,6 @@ Options:
   --progress            when generating heatmap indicates progressbar
   --generate-frames     generate frames after meteo update
   --generate-cache      generate cache for --last-hours station data
-  --overwrite           cached frame will be overwritten with generated one
   --persist             persist frames in database
   --usedb               use database persisted frames if available
   --gios-stations       update gios stations database
