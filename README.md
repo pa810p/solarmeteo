@@ -157,6 +157,69 @@ Above crontab configuration means that external services will be called:
 - meteo: every full hour plus 20 minutes
 - solar: every 15 minutes
 
+### Command-line help
+You can inspect every CLI flag via:
+````shell
+$ python3 -m solarmeteo.solarmeteo --help
+````
+Output:
+````text
+Usage: solarmeteo.py [-b] [-m] [-i] [-f] [-l] [-o]
+
+This is a meteo analyzer
+
+Options:
+  --version             show program's version number and exit
+  -h, --help            show this help message and exit
+  -b METEO_DB_URL, --database=METEO_DB_URL
+                        database connection string
+  -m IMGW_DATA_URL, --meteo_data=IMGW_DATA_URL
+                        imgw data url
+  -i IMGW_UPDATE_INTERVAL, --imgw_update_interval=IMGW_UPDATE_INTERVAL
+                        imgw update interval in daemonize mode
+  -f UPDATER_UPDATE_STATION_COORDINATES_FILE, --coordinates-file=UPDATER_UPDATE_STATION_COORDINATES_FILE
+                        file with station coordinates
+  -c, --update-coordinates
+                        update station coordinates
+  -l LOG_LEVEL, --log-level=LOG_LEVEL
+                        logging level
+  -k SOLAR_KEY, --solar_key=SOLAR_KEY
+                        solar key
+  --site_id=SITE_ID     solar site id
+  --longitude=LON
+  --latitude=LAT
+  --height=HEIGHT
+  --solar_url=SOLAR_URL
+                        solar base url
+  --solar_update_interval=SOLAR_UPDATE_INTERVAL
+                        solar update interval
+  --solar-period=SOLAR_UPDATE_PERIOD
+                        solar update from_date:to_date
+  --heatmap=HEATMAP     generate map of: temperature, precipitation, humidity,
+                        pressure, windspeed
+  --last-hours=LAST_HOURS
+                        generate animated map from last n hours
+  --format=FILE_FORMAT  file format for heatmap: png, gif (animated), default
+                        is png
+  -o OUTPUT_FILE, --output=OUTPUT_FILE
+                        output file for heatmap, default is
+                        [heatmap].[png|gif]
+  --max-workers=MAX_WORKERS
+                        workers used in parallel when generating animations
+  --progress            when generating heatmap indicates progressbar
+  --generate-frames     generate frames after meteo update
+  --generate-cache      generate cache for --last-hours station data
+  --overwrite           cached frame will be overwritten with generated one
+  --persist             persist frames in database
+  --usedb               use database persisted frames if available
+  --gios-stations       update gios stations database
+  --keep-frames=KEEP_FRAMES
+                        keep latest frames after generating older will be
+                        removed
+  -u UPDATE, --update=UPDATE
+                        service to update [imgw, solar, gios], default is all
+````
+
 ### Example usages:
 Generate WebP animation from latest 48 hours.
 ```shell
