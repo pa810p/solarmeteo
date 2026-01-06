@@ -121,7 +121,6 @@ def main():
     parser.add_option('--progress', dest='progress', help='when generating heatmap indicates progressbar', action='store_true')
     parser.add_option('--generate-frames', dest='generate_frames', help='generate frames after meteo update', action='store_true')
     parser.add_option('--generate-cache', dest='generate_cache', help='generate cache for --last-hours station data', action='store_true')
-    parser.add_option('--overwrite', dest='overwrite', help='cached frame will be overwritten with generated one', action='store_true')
     parser.add_option('--persist', dest='persist', help='persist frames in database', action='store_true')
     parser.add_option('--usedb', dest='usedb', help='use database persisted frames if available', action='store_true')
     parser.add_option("--gios-stations", dest="gios_stations", help="update gios stations database", action='store_true')
@@ -132,9 +131,6 @@ def main():
     parser.add_option('-u', '--update', dest='update', help='service to update [imgw, solar, gios], default is all')
 
     (options, args) = parser.parse_args()
-
-    # if options.daemonize is not None and not '':
-    #     meteo_daemonize = options.daemonize
 
     if options.meteo_db_url is not None and not '' and len(options.meteo_db_url) != 0:
         meteo_db_url = options.meteo_db_url
@@ -199,9 +195,6 @@ def main():
 
     if options.generate_cache is not None and not '':
         generate_cache = options.generate_cache
-
-    if options.overwrite is not None and not '':
-        overwrite = options.overwrite
 
     if options.persist is not None and not '':
         persist = options.persist
@@ -297,7 +290,7 @@ def main():
 
 if __name__ == '__main__':
     desc = """This is a meteo analyzer"""
-    ver = "%prog 2.0 (c) 2019-2025 Pawel Prokop"
+    ver = "%prog 2.0 (c) 2019-2026 Pawel Prokop"
 
     main()
 
