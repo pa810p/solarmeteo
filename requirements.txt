@@ -22,7 +22,7 @@ matplotlib==3.10.3
 numpy==2.2.6
 packaging==25.0
 pandas==2.3.0
-pillow==11.2.1
+pillow==12.1.1
 psycopg2==2.9.10
 pyerfa==2.0.1.5
 pyogrio==0.11.0
